@@ -70,6 +70,30 @@ public class PassportSlotEngine {
         return summary;
     }
 
+    public List<Centre> getCentres() {
+        return List.copyOf(centres);
+    }
+
+    public List<Application> getApplications() {
+        return List.copyOf(applications);
+    }
+
+    public List<Document> getDocuments() {
+        return List.copyOf(documents);
+    }
+
+    public List<Appointment> getAppointments() {
+        return List.copyOf(appointments);
+    }
+
+    public List<Slot> getSlots() {
+        return List.copyOf(slots);
+    }
+
+    public List<AllocationResult> getAllocationResults() {
+        return List.copyOf(allocationResults);
+    }
+
     private void loadCentres() throws IOException {
         Document parsedDocument = null;
         CsvReader reader = new CsvReader();

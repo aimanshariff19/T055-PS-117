@@ -12,7 +12,7 @@ public class PriorityComparator implements Comparator<Application> {
         if (a == null) return 1;
         if (b == null) return -1;
 
-        int categoryOrder = categoryPriority(a.getCategory()) - categoryPriority(b.getCategory());
+        int categoryOrder = priorityRank(a.getCategory()) - priorityRank(b.getCategory());
         if (categoryOrder != 0) return categoryOrder;
 
         if (a.getApplicationTimestamp() != null && b.getApplicationTimestamp() != null) {
@@ -30,7 +30,7 @@ public class PriorityComparator implements Comparator<Application> {
         );
     }
 
-    private int categoryPriority(Category category) {
+    public int priorityRank(Category category) {
         if (category == null) return 999;
         return switch (category) {
             case TATKAL -> 1;
