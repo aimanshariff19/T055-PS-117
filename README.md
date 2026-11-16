@@ -1,4 +1,6 @@
-# T055-PS-117 — Passport and Visa Appointment Slot Allocation Engine
+# T055-PS-117
+
+## Passport and Visa Appointment Slot Allocation Engine
 
 ## Overview
 This Maven command-line project targets Java 17 and includes the PS-117 processing pipeline and synthetic CSV inputs. The command selectors are accepted by the CLI, but they currently all invoke the same processing pipeline.
