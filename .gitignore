@@ -1,0 +1,35 @@
+# Maven and Java build output
+target/
+**/target/
+*.class
+
+# IDE and operating-system files
+.idea/
+.vscode/
+.DS_Store
+
+# Generated application output
+/output/
+
+# Logs, temporary files, and editor backups
+*.log
+*.tmp
+*.temp
+*.swp
+*.swo
+*~
+tmp/
+temp/
+
+# Environment files and local credentials
+.env
+.env.*
+!.env.example
+*.secret
+*.credentials
+*.pem
+*.key
+*.p12
+*.pfx
+*.jks
+*.keystore

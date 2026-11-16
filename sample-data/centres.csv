@@ -1,0 +1,3 @@
+centre_id,name,city,daily_capacity,slot_capacity,open_time,close_time,working_days
+C1,Central Passport Office,Bengaluru,100,10,09:00,16:00,MON;TUE;WED;THU;FRI
+C2,Regional Passport Office,Hyderabad,80,8,09:00,16:00,MON;TUE;WED;THU;FRI

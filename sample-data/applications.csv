@@ -1,0 +1,4 @@
+application_id,applicant_id,full_name,date_of_birth,application_timestamp,service_type,centre_preference,category_flags,aadhaar_verification_status,address_change_flag,passport_condition,booklet_size,document_refs
+A1,AP001,Alice,1990-05-11,2026-11-12T08:00:00,NORMAL,C1,NORMAL,VERIFIED,false,NORMAL,36,D1;D2;D3
+A2,AP002,Bob,1965-06-02,2026-11-12T08:30:00,TATKAL,C1,SENIOR_CITIZEN,VERIFIED,true,NORMAL,36,D4;D5;D6
+A3,AP003,Charlie,2009-04-20,2026-11-12T09:00:00,RE_ISSUE,C1,MINOR,VERIFIED,false,NORMAL,36,D7;D8;D9
