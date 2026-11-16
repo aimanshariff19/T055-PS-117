@@ -385,7 +385,7 @@ final class DashboardDataService {
 
             Map<String, Object> result = new LinkedHashMap<>();
             result.put("status", "completed");
-            result.put("processedAt", snapshot.completedAt());
+            result.put("processedAt", snapshot.completedAt().toString());
             result.put("summary", executionSummary);
             result.put("reports", reports());
             return result;
@@ -594,19 +594,19 @@ final class DashboardDataService {
             throw new ApiException(422, "INVALID_CSV_VALUE",
                     file + " has an invalid " + enumType.getSimpleName() + " for record " + recordId + ".");
         }
+    }
 
-        private void requireValue(Map<String, String> row, String column, String file, String recordId) {
-            if (value(row, column).isBlank()) {
-                throw new ApiException(422, "INVALID_CSV_VALUE",
-                        file + " has an empty " + column + " for record " + recordId + ".");
-            }
+    private void requireValue(Map<String, String> row, String column, String file, String recordId) {
+        if (value(row, column).isBlank()) {
+            throw new ApiException(422, "INVALID_CSV_VALUE",
+                    file + " has an empty " + column + " for record " + recordId + ".");
         }
+    }
 
-        private boolean reportIsSafe(Path directory, Path file) throws IOException {
-            if (!Files.isDirectory(directory) || !Files.isRegularFile(file) || !Files.isReadable(file)) return false;
-            Path realDirectory = directory.toRealPath();
-            return file.toRealPath().startsWith(realDirectory);
-        }
+    private boolean reportIsSafe(Path directory, Path file) throws IOException {
+        if (!Files.isDirectory(directory) || !Files.isRegularFile(file) || !Files.isReadable(file)) return false;
+        Path realDirectory = directory.toRealPath();
+        return file.toRealPath().startsWith(realDirectory);
     }
 
     private record Report(String id, String name, String fileName, String note) {}

@@ -75,11 +75,6 @@ public final class DashboardApiServer implements AutoCloseable {
                     "code", exception.code(),
                     "message", exception.getMessage()
             )));
-        } catch (JsonProcessingException exception) {
-            sendJson(exchange, 400, Map.of("error", Map.of(
-                    "code", "INVALID_JSON",
-                    "message", "Request body must contain valid JSON."
-            )));
         } catch (IOException exception) {
             System.err.println("Dashboard request I/O failed: " + exception.getMessage());
             if (exchange.getResponseCode() == -1) {
@@ -189,7 +184,12 @@ public final class DashboardApiServer implements AutoCloseable {
         LocalDateTime defaultAsOf = LocalDateTime.now();
         if (body.length == 0) return defaultAsOf;
 
-        JsonNode node = objectMapper.readTree(body);
+        JsonNode node;
+        try {
+            node = objectMapper.readTree(body);
+        } catch (JsonProcessingException exception) {
+            throw new ApiException(400, "INVALID_JSON", "Request body must contain valid JSON.");
+        }
         if (node == null || !node.isObject()) {
             throw new ApiException(400, "INVALID_REQUEST", "Request body must be a JSON object.");
         }
