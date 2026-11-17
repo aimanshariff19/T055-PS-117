@@ -319,3 +319,78 @@ th, td { overflow-wrap: anywhere; }
 .detail-grid { align-items: stretch; }
 .settings-row { min-width: 0; }
 .settings-value { max-width: 62%; overflow-wrap: anywhere; }
+
+
+/* Readability pass — consistent, accessible type scale */
+:root { font-size: 14px; }
+body { font-size: 14px; line-height: 1.55; }
+.nav-link { font-size: 13px; line-height: 1.4; }
+.nav-section-label { font-size: 11px; }
+.brand-subtitle { font-size: 10px; }
+.breadcrumb { font-size: 13px; }
+.search-box input, .page-description { font-size: 13px; }
+.page-description { line-height: 1.65; }
+.eyebrow { font-size: 11px; letter-spacing: .9px; }
+h1 { line-height: 1.25; }
+.button { font-size: 13px; }
+.data-note { font-size: 12px; line-height: 1.6; }
+.stat-top { font-size: 12px; }
+.stat-value { font-size: 27px; }
+.stat-foot { font-size: 11px; }
+.panel-title { font-size: 14px; }
+.panel-subtitle { font-size: 11px; }
+.panel-action { font-size: 12px; }
+.chart-legend, .bar-row, .bar-value, .capacity-top, .capacity-meta { font-size: 11px; }
+th { font-size: 10px; letter-spacing: .35px; }
+td { font-size: 12px; line-height: 1.5; }
+.secondary-cell { font-size: 11px; }
+.badge { font-size: 10px; }
+.table-search input, .select-control { font-size: 12px; }
+.table-footer, .page-button { font-size: 11px; }
+.empty-state p, .error-state p { font-size: 12px; line-height: 1.65; }
+.empty-state h3, .error-state h3 { font-size: 15px; }
+.settings-label, .settings-value { font-size: 12px; }
+.settings-value code { font-size: 11px; }
+.detail-item span { font-size: 10px; }
+.detail-item strong { font-size: 12px; }
+.process-banner h3 { font-size: 14px; }
+.process-banner p { font-size: 12px; line-height: 1.6; }
+.footer { font-size: 11px; }
+
+/* Bring the Overview's intentionally compact labels up to readable sizes */
+.welcome-kicker, .section-eyebrow { font-size: 10px; }
+.welcome-copy p { font-size: 13px; line-height: 1.7; }
+.welcome-meta { font-size: 11px; }
+.welcome-bottom { font-size: 9px; }
+.overview-section-heading h2, .overview-card-head h2 { font-size: 17px; }
+.overview-card-head p { font-size: 11px; line-height: 1.5; }
+.snapshot-label { font-size: 10px; }
+.overview-stat-top { font-size: 11px; }
+.overview-stat-value { font-size: 29px; }
+.overview-stat-bottom { font-size: 10px; }
+.trend-legend { font-size: 10px; }
+.chart-foot { font-size: 9px; }
+.priority-total span { font-size: 10px; }
+.priority-legend div, .priority-legend b { font-size: 11px; }
+.priority-foot { font-size: 9px; line-height: 1.5; }
+.overview-link { font-size: 10px; }
+.activity-person strong { font-size: 11px; }
+.activity-person span { font-size: 10px; }
+.activity-status .badge { font-size: 9px; }
+.activity-row time { font-size: 9px; }
+.activity-footer { font-size: 9px; }
+.centre-row-top strong, .centre-row-top b { font-size: 11px; }
+.centre-row-top span, .centre-row-foot { font-size: 10px; }
+.overview-disclaimer { font-size: 11px; line-height: 1.65; }
+.overview-footer { font-size: 9px; }
+
+@media (max-width: 560px) {
+  body { font-size: 13px; }
+  .page-description { font-size: 12px; }
+  th { font-size: 10px; }
+  td { font-size: 11px; }
+  .overview-stat-top { font-size: 10px; }
+  .overview-stat-value { font-size: 25px; }
+  .activity-person strong { font-size: 10px; }
+  .activity-person span { font-size: 9px; }
+}
