@@ -66,6 +66,8 @@ public class QuotaAllocation {
         }
         releasedQuota += value;
         released = true;
+        remainingCapacity = Math.max(0, remainingCapacity - value);
+        unusedQuota = remainingCapacity;
         releaseTimestamp = LocalDateTime.now();
     }
 

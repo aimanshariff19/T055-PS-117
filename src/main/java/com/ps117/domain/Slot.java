@@ -44,9 +44,19 @@ public class Slot {
     public LocalTime getStartTime() { return startTime; }
     public void setStartTime(LocalTime startTime) { this.startTime = startTime; }
     public int getPhysicalCapacity() { return physicalCapacity; }
-    public void setPhysicalCapacity(int physicalCapacity) { this.physicalCapacity = physicalCapacity; }
+    public void setPhysicalCapacity(int physicalCapacity) {
+        this.physicalCapacity = physicalCapacity;
+        this.overbookingAllowance = Math.floorDiv(physicalCapacity * 10, 100);
+        if (physicalCapacity <= 7) {
+            this.overbookingAllowance = 0;
+        }
+        this.availableCapacity = Math.max(0, physicalCapacity - scheduledAllocationCount);
+    }
     public int getScheduledAllocationCount() { return scheduledAllocationCount; }
-    public void setScheduledAllocationCount(int scheduledAllocationCount) { this.scheduledAllocationCount = scheduledAllocationCount; }
+    public void setScheduledAllocationCount(int scheduledAllocationCount) {
+        this.scheduledAllocationCount = scheduledAllocationCount;
+        this.availableCapacity = Math.max(0, physicalCapacity - scheduledAllocationCount);
+    }
     public int getOverbookingAllowance() { return overbookingAllowance; }
     public void setOverbookingAllowance(int overbookingAllowance) { this.overbookingAllowance = overbookingAllowance; }
     public int getAvailableCapacity() { return availableCapacity; }
@@ -55,22 +65,38 @@ public class Slot {
     public void setStatus(SlotStatus status) { this.status = status; }
 
     public boolean canAllocate() {
-        return availableCapacity > 0;
+        return scheduledAllocationCount < (physicalCapacity + overbookingAllowance);
     }
 
-    public void allocate() {
-        if (availableCapacity <= 0) {
-            throw new IllegalStateException("No capacity available in slot: " + slotId);
-        }
-        scheduledAllocationCount++;
-        availableCapacity--;
-        if (availableCapacity == 0) {
-            status = SlotStatus.FULL;
-        }
+    public boolean isOverbooked() {
+        return scheduledAllocationCount >= physicalCapacity;
     }
 
     public boolean isOverbookAllowed() {
         return overbookingAllowance > 0;
+    }
+
+    public boolean allocate() {
+        if (!canAllocate()) {
+            throw new IllegalStateException("No capacity available in slot: " + slotId);
+        }
+        boolean isOverflow = (scheduledAllocationCount >= physicalCapacity);
+        scheduledAllocationCount++;
+        availableCapacity = Math.max(0, physicalCapacity - scheduledAllocationCount);
+        if (scheduledAllocationCount >= (physicalCapacity + overbookingAllowance)) {
+            status = SlotStatus.FULL;
+        }
+        return isOverflow;
+    }
+
+    public void releaseOne() {
+        if (scheduledAllocationCount > 0) {
+            scheduledAllocationCount--;
+            availableCapacity = Math.max(0, physicalCapacity - scheduledAllocationCount);
+            if (scheduledAllocationCount < (physicalCapacity + overbookingAllowance)) {
+                status = SlotStatus.OPEN;
+            }
+        }
     }
 
     @Override public boolean equals(Object o) {

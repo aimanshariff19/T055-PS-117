@@ -76,6 +76,5 @@ public class Main {
         System.out.println("Options: --command COMMAND --centres FILE --applications FILE");
         System.out.println("         --documents FILE --events FILE --output DIRECTORY --as-of ISO_DATE_TIME");
         System.out.println("         --help, --version");
-        System.out.println("Note: command selectors currently invoke the same processing pipeline.");
     }
 }

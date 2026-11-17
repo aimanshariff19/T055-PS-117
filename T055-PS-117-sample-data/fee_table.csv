@@ -1,0 +1,11 @@
+fee_code,amount,notes
+NORMAL_36,1500.00,
+NORMAL_60,2000.00,
+TATKAL_SURCHARGE,2000.00,added to the base fee; never refunded after allocation
+MINOR_UNDER_15,1000.00,36-page only
+REISSUE_EXPIRED_OVER_3Y,3000.00,within 1 year of expiry = NORMAL fee
+LOST_DAMAGED_36,3000.00,
+LOST_DAMAGED_60,3500.00,
+PCC,500.00,
+SENIOR_DISCOUNT_PCT,10.00,on the base fee only
+CANCEL_PROCESSING,100.00,deducted from a >48 h refund

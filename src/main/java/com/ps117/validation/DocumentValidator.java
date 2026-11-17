@@ -7,9 +7,7 @@ import com.ps117.enums.*;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 public class DocumentValidator {
@@ -19,50 +17,61 @@ public class DocumentValidator {
 
     public DocumentValidationResult validate(Application application, List<Document> documents, LocalDate appointmentDate) {
         DocumentValidationResult result = new DocumentValidationResult();
-        result.setApplicationId(application.getApplicationId());
-        if (application == null || documents == null) {
+        if (application == null) {
             result.setValidationStatus(ValidationStatus.DOC_BLOCK);
             result.setVerificationMode(VerificationMode.DOC_BLOCK);
-            result.setBlockingGaps(List.of("Invalid document set"));
+            result.setBlockingGaps(List.of("Missing application"));
+            return result;
+        }
+
+        result.setApplicationId(application.getApplicationId());
+
+        if (documents == null || documents.isEmpty()) {
+            result.setValidationStatus(ValidationStatus.DOC_BLOCK);
+            result.setVerificationMode(VerificationMode.DOC_BLOCK);
+            result.setBlockingGaps(List.of("No documents provided"));
+            application.setValidationStatus(ValidationStatus.DOC_BLOCK);
+            application.setApplicationStatus(ApplicationStatus.DOC_BLOCK);
+            application.setVerificationMode(VerificationMode.DOC_BLOCK);
+            application.setDocumentScore(0);
+            application.setEligibleForAllocation(false);
+            application.setBlockingReason("No documents provided");
             return result;
         }
 
         List<Document> validDocs = new ArrayList<>();
         List<String> expired = new ArrayList<>();
-        List<String> missing = new ArrayList<>();
-        List<String> blockingGaps = new ArrayList<>();
-        Set<DocumentType> seen = new HashSet<>();
 
         for (Document doc : documents) {
             if (doc == null) continue;
             String label = doc.getDocumentType() == null ? "UNKNOWN" : doc.getDocumentType().name();
             result.getDocumentList().add(label);
-            if (doc.getExpiryDate() != null && !doc.getExpiryDate().isAfter(appointmentDate)) {
+
+            // EC-04: A document expiring on the appointment date is not yet 'past', so it is still valid.
+            // It is only expired if its valid_until date is strictly before the appointment date.
+            if (doc.getExpiryDate() != null && doc.getExpiryDate().isBefore(appointmentDate)) {
                 expired.add(label);
                 continue;
-            }
-            if (doc.getDocumentType() != null) {
-                seen.add(doc.getDocumentType());
             }
             validDocs.add(doc);
         }
 
-        List<DocumentType> required = checklist.getMandatoryDocuments(application);
-        for (DocumentType requiredType : required) {
-            boolean found = validDocs.stream().anyMatch(d -> d.getDocumentType() == requiredType);
-            if (!found) {
-                missing.add(requiredType.name());
-                blockingGaps.add("Missing mandatory document: " + requiredType.name());
-            }
-        }
+        List<String> missingRequirements = checklist.validateRequirements(application, validDocs);
+        List<String> blockingGaps = new ArrayList<>(missingRequirements);
 
-        result.setValidDocuments(validDocs.stream().map(d -> d.getDocumentType().name()).collect(Collectors.toList()));
+        result.setValidDocuments(validDocs.stream().map(d -> d.getDocumentType() == null ? "UNKNOWN" : d.getDocumentType().name()).collect(Collectors.toList()));
         result.setExpiredDocuments(expired);
-        result.setMissingDocuments(missing);
-        result.setBlockingGaps(blockingGaps);
+        result.setMissingDocuments(missingRequirements);
 
         int score = scorer.score(validDocs);
         result.setDocumentScore(score);
+
+        if (score < 3) {
+            blockingGaps.add("Document score " + score + " is below minimum threshold 3");
+        }
+
+        result.setBlockingGaps(blockingGaps);
+
         VerificationMode mode = verificationModeResolver.resolve(score, application);
         result.setVerificationMode(mode);
 
@@ -71,15 +80,17 @@ public class DocumentValidator {
             application.setApplicationStatus(ApplicationStatus.DOC_BLOCK);
             application.setValidationStatus(ValidationStatus.DOC_BLOCK);
             application.setEligibleForAllocation(false);
+            application.setVerificationMode(VerificationMode.DOC_BLOCK);
             application.setBlockingReason(String.join("; ", blockingGaps));
         } else {
             result.setValidationStatus(ValidationStatus.VALID);
             application.setApplicationStatus(ApplicationStatus.VALIDATED);
             application.setValidationStatus(ValidationStatus.VALID);
             application.setEligibleForAllocation(true);
+            application.setVerificationMode(mode);
+            application.setBlockingReason(null);
         }
         application.setDocumentScore(score);
-        application.setVerificationMode(mode);
         return result;
     }
 }

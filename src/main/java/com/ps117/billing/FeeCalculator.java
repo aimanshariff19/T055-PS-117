@@ -2,7 +2,11 @@ package com.ps117.billing;
 
 import com.ps117.domain.Application;
 import com.ps117.domain.FeeBreakdown;
-import com.ps117.enums.*;
+import com.ps117.enums.BookletSize;
+import com.ps117.enums.Category;
+import com.ps117.enums.PassportCondition;
+import com.ps117.enums.ServiceType;
+import com.ps117.util.MoneyUtils;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -15,75 +19,85 @@ public class FeeCalculator implements FeeStrategy {
     public static final BigDecimal PCC_BASE = new BigDecimal("500.00");
     public static final BigDecimal REISSUE_BASE = new BigDecimal("3000.00");
     public static final BigDecimal REISSUE_60 = new BigDecimal("3500.00");
+    public static final BigDecimal LOST_DAMAGED_36 = new BigDecimal("3000.00");
+    public static final BigDecimal LOST_DAMAGED_60 = new BigDecimal("3500.00");
+    public static final BigDecimal SENIOR_DISCOUNT_RATE = new BigDecimal("0.10");
 
     @Override
     public BigDecimal calculate(Application application) {
-        if (application == null) return BigDecimal.ZERO;
-        BigDecimal base = BigDecimal.ZERO;
-        BigDecimal surplus = BigDecimal.ZERO;
-        if (application.getServiceType() == ServiceType.NORMAL) {
-            base = application.getBookletSize() == BookletSize.PAGES_60 ? BASE_NORMAL_60 : BASE_NORMAL_36;
-        } else if (application.getServiceType() == ServiceType.TATKAL) {
-            base = application.getBookletSize() == BookletSize.PAGES_60 ? BASE_NORMAL_60 : BASE_NORMAL_36;
-            surplus = TATKAL_SURCHARGE;
-        } else if (application.getCategory() == Category.MINOR && application.getDateOfBirth() != null) {
-            base = MINOR_BASE;
-        } else if (application.getServiceType() == ServiceType.PCC) {
-            base = PCC_BASE;
-        } else if (application.getServiceType() == ServiceType.RE_ISSUE) {
-            base = REISSUE_BASE;
-            if (application.getPassportCondition() == PassportCondition.LOST || application.getPassportCondition() == PassportCondition.DAMAGED) {
-                base = application.getBookletSize() == BookletSize.PAGES_60 ? REISSUE_60 : REISSUE_BASE;
-            }
-        }
+        return calculate(application, null);
+    }
 
-        if (application.getCategory() == Category.SENIOR_CITIZEN) {
-            BigDecimal discount = base.multiply(new BigDecimal("0.10"));
-            base = base.subtract(discount);
-        }
-        BigDecimal total = base.add(surplus);
-        return total.setScale(2);
+    public BigDecimal calculate(Application application, LocalDate appointmentDate) {
+        FeeBreakdown breakdown = breakdown(application, appointmentDate);
+        return breakdown.getTotal();
     }
 
     public FeeBreakdown breakdown(Application application) {
+        return breakdown(application, null);
+    }
+
+    public FeeBreakdown breakdown(Application application, LocalDate appointmentDate) {
         FeeBreakdown breakdown = new FeeBreakdown();
+        if (application == null) {
+            return breakdown;
+        }
         breakdown.setApplicationId(application.getApplicationId());
+
+        LocalDate effectiveDate = appointmentDate;
+        if (effectiveDate == null && application.getApplicationTimestamp() != null) {
+            effectiveDate = application.getApplicationTimestamp().toLocalDate();
+        }
+
+        boolean isSenior = (application.getCategory() == Category.SENIOR_CITIZEN)
+                || (application.getCategoryFlags() != null && application.getCategoryFlags().contains(Category.SENIOR_CITIZEN))
+                || (effectiveDate != null && application.isSeniorCitizenOn(effectiveDate));
+
+        boolean isMinorUnder15 = (effectiveDate != null && application.isMinorOn(effectiveDate))
+                || (application.getCategory() == Category.MINOR && (effectiveDate == null || application.isMinorOn(effectiveDate)));
+
         BigDecimal base = BigDecimal.ZERO;
         BigDecimal tatkal = BigDecimal.ZERO;
-        BigDecimal discount = BigDecimal.ZERO;
 
-        if (application.getServiceType() == ServiceType.NORMAL) {
-            base = application.getBookletSize() == BookletSize.PAGES_60 ? BASE_NORMAL_60 : BASE_NORMAL_36;
-        } else if (application.getServiceType() == ServiceType.TATKAL) {
-            base = application.getBookletSize() == BookletSize.PAGES_60 ? BASE_NORMAL_60 : BASE_NORMAL_36;
-            tatkal = TATKAL_SURCHARGE;
-        } else if (application.getCategory() == Category.MINOR && application.getDateOfBirth() != null) {
-            base = MINOR_BASE;
-        } else if (application.getServiceType() == ServiceType.PCC) {
+        ServiceType service = application.getServiceType();
+        BookletSize booklet = application.getBookletSize() == null ? BookletSize.PAGES_36 : application.getBookletSize();
+
+        if (service == ServiceType.PCC) {
             base = PCC_BASE;
-        } else if (application.getServiceType() == ServiceType.RE_ISSUE) {
-            base = REISSUE_BASE;
+        } else if (service == ServiceType.RE_ISSUE) {
             if (application.getPassportCondition() == PassportCondition.LOST || application.getPassportCondition() == PassportCondition.DAMAGED) {
-                base = application.getBookletSize() == BookletSize.PAGES_60 ? REISSUE_60 : REISSUE_BASE;
+                base = booklet == BookletSize.PAGES_60 ? LOST_DAMAGED_60 : LOST_DAMAGED_36;
+            } else {
+                base = REISSUE_BASE;
             }
+        } else if (isMinorUnder15 && service != ServiceType.TATKAL) {
+            base = MINOR_BASE;
+        } else {
+            base = booklet == BookletSize.PAGES_60 ? BASE_NORMAL_60 : BASE_NORMAL_36;
         }
 
-        if (application.getCategory() == Category.SENIOR_CITIZEN) {
-            discount = base.multiply(new BigDecimal("0.10"));
-            base = base.subtract(discount);
+        if (service == ServiceType.TATKAL || (application.getCategoryFlags() != null && application.getCategoryFlags().contains(Category.TATKAL))) {
+            tatkal = TATKAL_SURCHARGE;
         }
 
-        BigDecimal total = base.add(tatkal);
-        breakdown.setBaseFee(base);
-        breakdown.setTatkalSurcharge(tatkal);
-        breakdown.setSeniorDiscount(discount);
-        breakdown.setTotal(total);
-        breakdown.addLineItem("base_fee", base);
+        BigDecimal discount = BigDecimal.ZERO;
+        if (isSenior) {
+            discount = MoneyUtils.scale(base.multiply(SENIOR_DISCOUNT_RATE));
+        }
+
+        BigDecimal netBase = base.subtract(discount);
+        BigDecimal total = netBase.add(tatkal);
+
+        breakdown.setBaseFee(MoneyUtils.scale(base));
+        breakdown.setSeniorDiscount(MoneyUtils.scale(discount));
+        breakdown.setTatkalSurcharge(MoneyUtils.scale(tatkal));
+        breakdown.setTotal(MoneyUtils.scale(total));
+        breakdown.addLineItem("base_fee", MoneyUtils.scale(base));
         if (tatkal.compareTo(BigDecimal.ZERO) > 0) {
-            breakdown.addLineItem("tatkal_surcharge", tatkal);
+            breakdown.addLineItem("tatkal_surcharge", MoneyUtils.scale(tatkal));
         }
         if (discount.compareTo(BigDecimal.ZERO) > 0) {
-            breakdown.addLineItem("senior_discount", discount);
+            breakdown.addLineItem("senior_discount", MoneyUtils.scale(discount));
         }
         return breakdown;
     }

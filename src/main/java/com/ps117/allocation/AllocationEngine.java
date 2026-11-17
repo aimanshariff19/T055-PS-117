@@ -16,58 +16,108 @@ public class AllocationEngine {
         for (Centre centre : centres) {
             centreMap.put(centre.getCentreId(), centre);
         }
+
+        Set<String> activeApplicants = new HashSet<>();
+
+        LocalDate targetAppointmentDate = asOfDate.plusDays(1);
+        for (Centre centre : centres) {
+            targetAppointmentDate = com.ps117.util.DateUtils.nextWorkingDay(asOfDate, bookingWindowValidator.getHolidays());
+            quotaManager.initializeQuotas(centre, targetAppointmentDate);
+        }
+
         List<Application> ordered = new ArrayList<>(applications);
+        for (Application application : ordered) {
+            if (application.getCategory() == null) {
+                application.setCategory(calculateCategory(application, targetAppointmentDate));
+            }
+        }
         ordered.sort(priorityComparator);
+
         for (Application application : ordered) {
             if (application == null) continue;
+            String catName = application.getCategory() == null ? "" : application.getCategory().name();
+
             if (application.getValidationStatus() == ValidationStatus.DOC_BLOCK || !application.isEligibleForAllocation()) {
-                results.add(new AllocationResult(application.getApplicationId(), false, "DOC_BLOCK", null, null, application.getCategory() == null ? "" : application.getCategory().name()));
+                String reason = application.getBlockingReason() != null ? application.getBlockingReason() : "DOC_BLOCK";
+                results.add(new AllocationResult(application.getApplicationId(), false, reason, null, null, catName));
                 continue;
             }
-            if (application.getCategory() == null) {
-                application.setCategory(calculateCategory(application, asOfDate));
+
+            if (activeApplicants.contains(application.getApplicantId())) {
+                results.add(new AllocationResult(application.getApplicationId(), false, "Duplicate active appointment", null, null, catName));
+                continue;
             }
+
             Centre centre = centreMap.get(application.getCentrePreference());
-            LocalDate appointmentDate = asOfDate.plusDays(1);
             if (centre == null) {
-                results.add(new AllocationResult(application.getApplicationId(), false, "No centre preference", null, null, application.getCategory().name()));
+                results.add(new AllocationResult(application.getApplicationId(), false, "No centre preference", null, null, catName));
                 continue;
             }
+
+            LocalDate appointmentDate = targetAppointmentDate;
             if (!bookingWindowValidator.isEligible(application, centre, appointmentDate, asOfDate)) {
-                results.add(new AllocationResult(application.getApplicationId(), false, "Booking window invalid", null, null, application.getCategory().name()));
+                results.add(new AllocationResult(application.getApplicationId(), false, "Booking window invalid", null, null, catName));
+                continue;
+            }
+
+            QuotaType consumedQuota = quotaManager.consumeForApplication(application, centre, appointmentDate);
+            if (consumedQuota == null) {
+                results.add(new AllocationResult(application.getApplicationId(), false, "Quota exhausted", null, null, catName));
                 continue;
             }
 
             Slot availableSlot = slots.stream()
-                    .filter(s -> s.getCentreId().equals(centre.getCentreId()) && s.getDate().equals(appointmentDate) && s.getAvailableCapacity() > 0)
+                    .filter(s -> s.getCentreId().equals(centre.getCentreId()) && s.getDate().equals(appointmentDate) && s.canAllocate())
                     .sorted(Comparator.comparing(Slot::getStartTime))
                     .findFirst()
                     .orElse(null);
 
             if (availableSlot == null) {
-                results.add(new AllocationResult(application.getApplicationId(), false, "No available slot", null, null, application.getCategory().name()));
+                results.add(new AllocationResult(application.getApplicationId(), false, "No available slot", null, null, catName));
                 continue;
             }
 
-            availableSlot.allocate();
+            boolean isOverbooked = availableSlot.allocate();
             application.setAllocatedSlotId(availableSlot.getSlotId());
             application.setAllocatedCentreId(centre.getCentreId());
             application.setApplicationStatus(ApplicationStatus.ALLOCATED);
-            results.add(new AllocationResult(application.getApplicationId(), true, "Allocated to slot", availableSlot.getSlotId(), centre.getCentreId(), application.getCategory().name()));
+            activeApplicants.add(application.getApplicantId());
+
+            results.add(new AllocationResult(application.getApplicationId(), true, "Allocated to slot", availableSlot.getSlotId(), centre.getCentreId(), catName));
         }
         return results;
     }
 
-    public Category calculateCategory(Application application, LocalDate asOfDate) {
+    public Category calculateCategory(Application application, LocalDate appointmentDate) {
         if (application == null) return Category.NORMAL;
-        if (application.getCategoryFlags() != null && !application.getCategoryFlags().isEmpty()) {
-            if (application.getCategoryFlags().contains(Category.TATKAL)) return Category.TATKAL;
-            if (application.getCategoryFlags().contains(Category.SENIOR_CITIZEN)) return Category.SENIOR_CITIZEN;
-            if (application.getCategoryFlags().contains(Category.MINOR)) return Category.MINOR;
-            if (application.getCategoryFlags().contains(Category.DIFFERENTLY_ABLED)) return Category.DIFFERENTLY_ABLED;
+
+        if (application.getServiceType() == ServiceType.TATKAL
+                && application.getAadhaarVerificationStatus() == VerificationStatus.VERIFIED) {
+            return Category.TATKAL;
         }
-        if (application.isSeniorCitizenOn(asOfDate)) return Category.SENIOR_CITIZEN;
-        if (application.isMinorOn(asOfDate)) return Category.MINOR;
+
+        if (application.getCategoryFlags() != null && application.getCategoryFlags().contains(Category.SENIOR_CITIZEN)) {
+            return Category.SENIOR_CITIZEN;
+        }
+        if (appointmentDate != null && application.isSeniorCitizenOn(appointmentDate)) {
+            return Category.SENIOR_CITIZEN;
+        }
+
+        if (appointmentDate != null) {
+            if (application.getDateOfBirth() != null && !application.isMinorOn(appointmentDate)) {
+                // Minor turned 15/18 between application and appointment - no longer a minor on appointment day!
+            } else if (application.isMinorOn(appointmentDate)
+                    || (application.getCategoryFlags() != null && application.getCategoryFlags().contains(Category.MINOR))) {
+                return Category.MINOR;
+            }
+        } else if (application.getCategoryFlags() != null && application.getCategoryFlags().contains(Category.MINOR)) {
+            return Category.MINOR;
+        }
+
+        if (application.getCategoryFlags() != null && application.getCategoryFlags().contains(Category.DIFFERENTLY_ABLED)) {
+            return Category.DIFFERENTLY_ABLED;
+        }
+
         return Category.NORMAL;
     }
 }
