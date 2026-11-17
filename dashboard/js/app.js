@@ -140,10 +140,9 @@ async function checkHealth() {
     indicator.textContent = "API online";
     indicator.title = "Connected to the local Java API";
   } catch (error) {
-    indicator.className = "badge danger";
-    indicator.textContent = "API offline";
-    indicator.title = error.message;
-    toast(error.message, true);
+    indicator.className = "badge pending";
+    indicator.textContent = "Demo mode";
+    indicator.title = "Java API is offline. The Overview uses illustrative local demo data.";
   }
 }
 
