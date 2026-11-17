@@ -14,22 +14,28 @@ public class RefundCalculator {
     public RefundResult calculate(BigDecimal feeAmount, LocalDateTime cancellationTime, LocalDateTime appointmentDateTime, boolean isTatkal) {
         RefundResult result = new RefundResult();
         if (feeAmount == null) feeAmount = BigDecimal.ZERO;
+        if (cancellationTime == null || appointmentDateTime == null) {
+            result.setRefundAmount(BigDecimal.ZERO.setScale(2));
+            result.setReason("Invalid cancellation or appointment timestamp");
+            return result;
+        }
 
         BigDecimal refundableAmount = feeAmount;
         if (isTatkal) {
-            refundableAmount = feeAmount.subtract(TATKAL_SURCHARGE);
-            if (refundableAmount.compareTo(BigDecimal.ZERO) < 0) {
-                refundableAmount = BigDecimal.ZERO;
-            }
+            refundableAmount = feeAmount.subtract(TATKAL_SURCHARGE).max(BigDecimal.ZERO);
         }
 
-        long hours = Duration.between(cancellationTime, appointmentDateTime).toHours();
+        Duration untilAppointment = Duration.between(cancellationTime, appointmentDateTime);
+        Duration twentyFourHours = Duration.ofHours(24);
+        Duration fortyEightHours = Duration.ofHours(48);
 
-        if (hours > 48) {
+        // Compare exact durations: toHours() truncates partial hours and can
+        // incorrectly treat 48h 30m as exactly 48h.
+        if (untilAppointment.compareTo(fortyEightHours) > 0) {
             BigDecimal refund = refundableAmount.subtract(CANCEL_PROCESSING_FEE);
             result.setRefundAmount(MoneyUtils.scale(refund.max(BigDecimal.ZERO)));
             result.setReason("More than 48 hours");
-        } else if (hours >= 24 && hours <= 48) {
+        } else if (untilAppointment.compareTo(twentyFourHours) >= 0) {
             BigDecimal refund = refundableAmount.multiply(new BigDecimal("0.50"));
             result.setRefundAmount(MoneyUtils.scale(refund));
             result.setReason("Between 24 and 48 hours (inclusive)");
