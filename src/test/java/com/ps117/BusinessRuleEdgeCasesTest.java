@@ -230,6 +230,33 @@ class BusinessRuleEdgeCasesTest {
         assertFalse(service.registerWalkIn(diffAbled4), "4th walk-in must be refused when cap is 3");
     }
 
+    @Test
+    void refundAtMoreThan48HoursUsesExactDuration() {
+        LocalDateTime appointment = LocalDateTime.of(2026, 10, 9, 9, 0);
+        LocalDateTime cancellation = LocalDateTime.of(2026, 10, 7, 8, 30);
+        RefundResult result = new RefundCalculator().calculate(
+                new BigDecimal("2000.00"), cancellation, appointment, false);
+        assertEquals(new BigDecimal("1900.00"), result.getRefundAmount(),
+                "48 hours and 30 minutes is in the >48h full-refund-minus-100 band");
+    }
+
+    @Test
+    void thirdRescheduleMovesApplicantBehindFifoPeersInSameCategory() {
+        Application rescheduled = new Application();
+        rescheduled.setApplicationId("APN-OLD");
+        rescheduled.setCategory(Category.NORMAL);
+        rescheduled.setApplicationTimestamp(LocalDateTime.of(2026, 1, 1, 9, 0));
+        rescheduled.setThirdRescheduleMovedToBack(true);
+
+        Application ordinary = new Application();
+        ordinary.setApplicationId("APN-NEW");
+        ordinary.setCategory(Category.NORMAL);
+        ordinary.setApplicationTimestamp(LocalDateTime.of(2026, 2, 1, 9, 0));
+
+        assertTrue(new PriorityComparator().compare(rescheduled, ordinary) > 0,
+                "Third-reschedule applicant must be behind ordinary applicants in the same category");
+    }
+
     // Additional test: Invalid CSV rows
     @Test
     void additionalTest_invalidCsvRowsHandledGracefully(@TempDir Path tempDir) throws Exception {
