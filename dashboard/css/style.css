@@ -472,3 +472,99 @@ tbody tr:hover { background: #f8faff; }
   .table-panel { border-radius: 9px; }
   .overview-welcome { border-radius: 12px; }
 }
+
+
+/* Motion + interaction refinement: restrained, fast and accessible */
+:root {
+  --motion-fast: 150ms;
+  --motion-base: 220ms;
+  --motion-slow: 360ms;
+  --ease-out: cubic-bezier(.2,.7,.2,1);
+  --focus-ring: 0 0 0 3px rgb(49 95 199 / 16%);
+}
+html { scroll-behavior: smooth; }
+body { -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; }
+#page-view { isolation: isolate; }
+#page-view > * {
+  animation: page-enter 420ms var(--ease-out) both;
+}
+#page-view > *:nth-child(2) { animation-delay: 45ms; }
+#page-view > *:nth-child(3) { animation-delay: 85ms; }
+#page-view > *:nth-child(4) { animation-delay: 125ms; }
+#page-view > *:nth-child(5) { animation-delay: 165ms; }
+@keyframes page-enter {
+  from { opacity: 0; transform: translate3d(0, 9px, 0); }
+  to { opacity: 1; transform: translate3d(0, 0, 0); }
+}
+.sidebar { transition: transform var(--motion-base) var(--ease-out); }
+.brand { transition: opacity var(--motion-fast) ease; }
+.brand:hover { opacity: .88; }
+.nav-link {
+  position: relative;
+  transition: color var(--motion-fast) ease, background var(--motion-fast) ease, transform var(--motion-fast) var(--ease-out);
+}
+.nav-link:hover { transform: translateX(2px); background: rgb(255 255 255 / 6%); }
+.nav-link.active { box-shadow: inset 2px 0 0 #8eafff; }
+.nav-link svg { transition: transform var(--motion-fast) var(--ease-out); }
+.nav-link:hover svg { transform: scale(1.06); }
+.button, .icon-button, .row-action, .page-button {
+  transition: color var(--motion-fast) ease, background var(--motion-fast) ease,
+    border-color var(--motion-fast) ease, box-shadow var(--motion-fast) ease,
+    transform var(--motion-fast) var(--ease-out);
+}
+.button:hover:not(:disabled) { transform: translateY(-1px); }
+.button:active:not(:disabled), .icon-button:active, .page-button:active { transform: translateY(0) scale(.98); }
+.button:focus-visible, .icon-button:focus-visible, .nav-link:focus-visible,
+input:focus-visible, select:focus-visible, .row-action:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+.panel, .stat-card, .overview-card, .overview-stat {
+  transition: border-color var(--motion-base) ease, box-shadow var(--motion-base) ease,
+    transform var(--motion-base) var(--ease-out);
+}
+.panel:hover, .overview-card:hover {
+  border-color: #d8e0ec;
+  box-shadow: 0 8px 24px rgb(16 24 40 / 5%);
+}
+.stat-card:hover, .overview-stat:hover { transform: translateY(-2px); }
+tbody tr { transition: background var(--motion-fast) ease; }
+.row-action { border-radius: 6px; }
+.row-action:hover { color: #244da9; background: #edf3ff; }
+.badge { transition: background var(--motion-fast) ease, color var(--motion-fast) ease; }
+.table-search, .select-control, .search-box, .modal {
+  transition: border-color var(--motion-fast) ease, box-shadow var(--motion-fast) ease;
+}
+.modal[open] { animation: modal-enter 200ms var(--ease-out) both; }
+@keyframes modal-enter {
+  from { opacity: 0; transform: translateY(8px) scale(.99); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+.toast { animation: toast-enter 220ms var(--ease-out) both; }
+@keyframes toast-enter {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.loading-state { animation: soft-pulse 1.4s ease-in-out infinite; }
+@keyframes soft-pulse { 50% { opacity: .58; } }
+.overview-welcome { position: relative; overflow: hidden; }
+.overview-welcome::after {
+  content: ""; position: absolute; inset: -45% auto -45% -35%; width: 32%;
+  transform: rotate(18deg); pointer-events: none;
+  background: linear-gradient(90deg, transparent, rgb(255 255 255 / 7%), transparent);
+  animation: welcome-sheen 9s ease-in-out infinite;
+}
+@keyframes welcome-sheen {
+  0%, 62%, 100% { left: -40%; opacity: 0; }
+  68% { opacity: 1; }
+  84% { left: 120%; opacity: .7; }
+}
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after {
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
