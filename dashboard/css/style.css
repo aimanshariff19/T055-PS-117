@@ -291,3 +291,31 @@ tbody tr:last-child td { border-bottom: 0; }
 @media(max-width:1100px){.overview-stats{grid-template-columns:repeat(2,minmax(0,1fr))}.welcome-art{right:-4%}.overview-main-grid,.overview-lower-grid{grid-template-columns:minmax(0,1fr) minmax(260px,.9fr)}}
 @media(max-width:760px){.overview-welcome{min-height:220px;padding:22px 20px 0}.welcome-art{right:-120px;opacity:.45}.overview-main-grid,.overview-lower-grid{grid-template-columns:1fr}.overview-card{padding:16px}.overview-section-heading{align-items:flex-start;flex-direction:column}.overview-footer{flex-direction:column}.activity-row{gap:7px}.activity-row time{width:50px}}
 @media(max-width:480px){.overview-stats{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.overview-stat{padding:12px;min-height:120px}.overview-stat-value{font-size:23px}.overview-stat-top{font-size:9px}.overview-stat-bottom{display:grid;gap:2px}.welcome-copy h1{font-size:26px}.welcome-copy p{max-width:280px}.welcome-bottom{font-size:7px}.activity-status .badge{font-size:7px}.activity-footer{flex-direction:column}}
+
+
+/* Global page alignment and compact-layout polish */
+html { overflow-x: hidden; }
+body { overflow-x: hidden; }
+#app, .app-shell, .workspace, .main-content, #page-content { min-width: 0; }
+.workspace { width: calc(100% - 258px); }
+.main-content { width: min(1440px, 100%); padding-top: 30px; padding-right: clamp(20px, 3vw, 42px); padding-left: clamp(20px, 3vw, 42px); }
+.page-heading { align-items: flex-end; margin-bottom: 22px; }
+.page-description { max-width: 720px; }
+.heading-actions { flex: 0 0 auto; }
+.stats-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; }
+.stat-card { min-width: 0; }
+.content-grid, .content-grid.equal { grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: stretch; gap: 16px; }
+.panel, .overview-card { min-width: 0; }
+.panel-header { min-height: 62px; }
+.panel-body { min-width: 0; }
+.table-panel { width: 100%; }
+.table-wrap { max-width: 100%; }
+table { min-width: 0; }
+th, td { overflow-wrap: anywhere; }
+.primary-cell { overflow-wrap: normal; }
+.table-toolbar { min-width: 0; }
+.process-banner { margin-bottom: 16px; }
+.empty-state, .error-state, .loading-state { min-height: 190px; }
+.detail-grid { align-items: stretch; }
+.settings-row { min-width: 0; }
+.settings-value { max-width: 62%; overflow-wrap: anywhere; }
