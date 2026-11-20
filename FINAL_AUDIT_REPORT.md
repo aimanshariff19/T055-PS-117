@@ -64,7 +64,7 @@ java -jar .\target\T055-PS-117-1.0.0.jar STREAM `
 | No-shows | 27 |
 | Walk-ins served | 3 |
 | Walk-ins refused | 1 |
-| Total fees assessed | ₹181,850.00 |
+| Total fees calculated | ₹216,850.00 |
 | Total refunds issued | ₹10,400.00 |
 | Applications forfeited | 6 |
 
@@ -99,7 +99,7 @@ The following totals were reported by the application:
 - 27 no-shows.
 - 3 walk-ins served.
 - 1 walk-in refused.
-- ₹181,850.00 in assessed fees.
+- ₹216,850.00 in calculated application fees.
 - ₹10,400.00 in refunds.
 - 6 applications forfeited.
 

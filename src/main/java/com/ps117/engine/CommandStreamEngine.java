@@ -188,7 +188,17 @@ public class CommandStreamEngine {
         List<String> unsuccessfulLogs = commandLog.stream().filter(this::isUnsuccessfulCommand).toList();
         long successfulCmds = commandCount - unsuccessfulLogs.size();
 
-        BigDecimal totalFees = feeBreakdowns.values().stream().map(FeeBreakdown::getTotal).reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal totalFees = applications.stream()
+                .map(app -> {
+                    FeeBreakdown fb = feeBreakdowns.get(app.getApplicationId());
+                    if (fb == null) {
+                        LocalDate apptDate = app.getPreferredDate() != null
+                                ? app.getPreferredDate() : LocalDate.of(2026, 10, 5);
+                        fb = feeCalculator.breakdown(app, apptDate);
+                    }
+                    return fb.getTotal();
+                })
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
         BigDecimal totalRefunds = refundAmounts.values().stream().reduce(BigDecimal.ZERO, BigDecimal::add);
         long forfeitedCount = forfeitedFees.values().stream().filter(Boolean::booleanValue).count();
 
@@ -209,7 +219,7 @@ public class CommandStreamEngine {
         System.out.printf("  Walk-ins served:                   %d%n", walkInServedCount);
         System.out.printf("  Walk-ins refused:                  %d%n", walkInRefusedCount);
         System.out.println("  ------------------------------------------------------------------------------");
-        System.out.printf("  Total fees assessed:               Rs %s%n", totalFees.toPlainString());
+        System.out.printf("  Total fees calculated:               Rs %s%n", totalFees.toPlainString());
         System.out.printf("  Total refunds issued:              Rs %s%n", totalRefunds.toPlainString());
         System.out.printf("  Applications forfeited:            %d%n", forfeitedCount);
         System.out.println("  ------------------------------------------------------------------------------");
