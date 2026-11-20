@@ -38,6 +38,12 @@ public class Application {
     private String allocatedCentreId;
     private String appointmentId;
 
+    // New fields from sample data
+    private LocalDate preferredDate;
+    private String preferredBand;   // MORNING, AFTERNOON, ANY
+    private Channel channel;        // ONLINE, WALK_IN
+    private LocalDate oldPassportExpiry;
+
     public Application() {
         this.applicationStatus = ApplicationStatus.SUBMITTED;
         this.validationStatus = ValidationStatus.VALID;
@@ -96,12 +102,26 @@ public class Application {
     public String getAppointmentId() { return appointmentId; }
     public void setAppointmentId(String appointmentId) { this.appointmentId = appointmentId; }
 
+    // New fields
+    public LocalDate getPreferredDate() { return preferredDate; }
+    public void setPreferredDate(LocalDate preferredDate) { this.preferredDate = preferredDate; }
+    public String getPreferredBand() { return preferredBand; }
+    public void setPreferredBand(String preferredBand) { this.preferredBand = preferredBand; }
+    public Channel getChannel() { return channel; }
+    public void setChannel(Channel channel) { this.channel = channel; }
+    public LocalDate getOldPassportExpiry() { return oldPassportExpiry; }
+    public void setOldPassportExpiry(LocalDate oldPassportExpiry) { this.oldPassportExpiry = oldPassportExpiry; }
+
     public boolean isSeniorCitizenOn(LocalDate appointmentDate) {
         return dateOfBirth != null && java.time.Period.between(dateOfBirth, appointmentDate).getYears() >= 60;
     }
 
     public boolean isMinorOn(LocalDate appointmentDate) {
         return dateOfBirth != null && java.time.Period.between(dateOfBirth, appointmentDate).getYears() < 15;
+    }
+
+    public boolean isUnder18On(LocalDate appointmentDate) {
+        return dateOfBirth != null && java.time.Period.between(dateOfBirth, appointmentDate).getYears() < 18;
     }
 
     public void addCategory(Category category) {

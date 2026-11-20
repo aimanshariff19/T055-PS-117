@@ -1,77 +1,63 @@
 # T055-PS-117
 
-## Passport and Visa Appointment Slot Allocation Engine
-
-## Overview
-This Maven command-line project targets Java 17 and includes the PS-117 processing pipeline and synthetic CSV inputs. The command selectors are accepted by the CLI, but they currently all invoke the same processing pipeline.
+Java 25 command-line simulation of passport appointment validation, priority allocation, quota handling, fees and appointment lifecycle events.
 
 ## Requirements
-- Java 17 or newer
+
+- JDK 25 or newer
+- PowerShell on Windows
+- Maven Wrapper included in this repository
 
 ## Build and test
-```sh
-./mvnw clean compile
-./mvnw test
-./mvnw package
+
+From the repository root:
+
+```powershell
+& .\mvnw.cmd clean package
+& .\mvnw.cmd test
 ```
 
-## Run
-```sh
-./scripts/run.sh --centres sample-data/centres.csv \
-  --applications sample-data/applications.csv \
-  --documents sample-data/documents.csv \
-  --events sample-data/events.csv \
-  --output output/run
+## Run the sample command stream
+
+The stream input files are in `T055-PS-117-sample-data\`. Run the following one-line command from the repository root after building:
+
+```powershell
+java -jar target\T055-PS-117-1.0.0.jar STREAM --commands "T055-PS-117-sample-data\commands.txt" --centres "T055-PS-117-sample-data\centres.csv" --applications "T055-PS-117-sample-data\applications.csv" --documents "T055-PS-117-sample-data\documents.csv" --holidays "T055-PS-117-sample-data\holidays.csv" --slot-capacity "T055-PS-117-sample-data\slot_capacity.csv" --output "output"
 ```
 
-Use `./scripts/run.sh --help` to display CLI options. Commands currently accepted: `PROCESS`, `VALIDATE`, `ALLOCATE`, `QUOTA-REPORT`, `FEE-REPORT`, `DAY-SHEET`, and `EVENT-PROCESS`.
+The stream processes commands in file order. It loads 120 applications, 339 documents, 3 centres, 3 holidays and 840 slot-capacity records; `commands.txt` contains 266 executable commands.
 
-## Local operations dashboard
+## Outputs
 
-The vanilla HTML/CSS/JavaScript dashboard is served by a small Java built-in HTTP server. The server binds to loopback only at `127.0.0.1:8080`.
+The command-stream run writes these reports to the selected output directory, replacing those files on each run:
 
-```sh
-./mvnw clean compile
-./mvnw test
-./mvnw package
-./scripts/dashboard.sh
+- `validation.csv` — validation score, verification mode, status and blocking gaps.
+- `appointments.csv` — allocation and lifecycle actions.
+- `fees.csv` — fees, concessions, refunds and forfeitures.
+- `day_sheets.csv` — requested daily centre sheets.
+- `command-log.txt` — command outcomes and rejection reasons.
+
+`output\` is generated runtime data and is ignored by Git.
+
+## Project layout
+
+```text
+src/main/java/com/ps117/       Java CLI, stream engine, rules, domain and CSV support
+src/test/java/com/ps117/       JUnit tests
+T055-PS-117-sample-data/       Main command-stream inputs and rule tables
+sample-data/                  Separate batch-mode inputs used by the batch CLI and tests
+docs/design/                  Design, diagrams, glossary and business-rule register
+output/                        Generated runtime reports (ignored)
 ```
 
-Open [http://127.0.0.1:8080](http://127.0.0.1:8080). The default inputs are the synthetic CSVs in `sample-data/`. Use **Run Java processing** in the dashboard to invoke the existing validation/allocation engine. Its reports are written to a new, unique directory under `output/dashboard-runs/`; the dashboard does not overwrite prior CLI reports.
+The project also retains batch CLI modes (`PROCESS`, `VALIDATE`, `ALLOCATE`, `QUOTA-REPORT`, `FEE-REPORT`, `DAY-SHEET`, `EVENT-PROCESS`). The command-stream mode above is the recommended full simulation.
 
-API endpoints: `GET /api/health`, `/api/dashboard/summary`, `/api/applications`, `/api/appointments`, `/api/allocation-results`, `/api/documents`, `/api/centres`, `/api/priorities`, `/api/billing`, `/api/reports`, and `/api/settings`; `GET /api/reports/{report-id}` downloads an available CSV; `POST /api/process` runs the Java engine against the fixed configured inputs. The process endpoint accepts only an optional ISO local date-time `asOf` value and does not accept paths or shell commands.
+## Design documents
 
-### Dashboard data sources
-
-The dashboard is a local demonstration and operations interface. It uses the project's synthetic CSV files and Java engine; it is not connected to a live Passport Seva or visa service.
-
-| Dashboard area | Current data source / behaviour |
-| --- | --- |
-| Overview | Uses illustrative demo values defined in the frontend. These figures are not calculated from the CSV files and must not be treated as actual processing totals. |
-| Applications | Reads application records returned by the Java API from the configured application CSV. Processing-derived fields are available only after a run. |
-| Appointments | Displays appointment allocations returned by the Java allocation engine after processing. |
-| Document verification | Displays document records and validation results returned by the Java API/engine. |
-| Appointment centres | Reads configured centre records and capacity data. Slot availability is generated by the Java engine after processing. |
-| Priority management | Displays priority information returned by the engine; it is not independently calculated by the frontend. |
-| Fee & refunds | Displays fee estimates and the currently available report data. It does not represent collected payments or completed refunds. |
-| Reports | Lists and downloads report files produced by the local processing run, subject to the engine's current report limitations. |
-
-When the Java API is unavailable, the header displays **Demo mode**. This does not mean every dashboard page is backed by a complete offline dataset: only the Overview has its own illustrative frontend demo values. Other pages require their API endpoints.
-
-### Data limitations
-
-- Application status, validation outcomes, appointments, and slot availability are only returned after the Java engine runs in the current server session.
-- `centres.csv` supplies daily/slot capacities; available slots are shown only from Java-generated slots after a run.
-- The engine has no payment ledger or persisted verification timestamps. Billing shows Java `FeeCalculator` estimates only, never collected amounts or successful payments.
-- Quota, fee-breakdown, and refund CSVs currently contain placeholder rows in the engine. Their exports are labelled and are not presented as live quota/payment data.
-- The dashboard uses no frontend framework and does not reimplement allocation or validation rules.
-
-If port 8080 is occupied, run `./scripts/dashboard.sh --port 8081`, then visit `http://127.0.0.1:8081`. The server remains loopback-only.
-
-## Project structure
-- `src/main/java/com/ps117` production code
-- `src/main/resources/application.properties` default application configuration
-- `src/test/java/com/ps117` tests
-- `dashboard` local HTML/CSS/JavaScript interface
-- `sample-data` sample CSV files
-- `output` generated reports
+- [Design document](docs/design/DESIGN_DOCUMENT.md)
+- [Class diagram](docs/design/CLASS_DIAGRAM.md)
+- [State diagram](docs/design/STATE_DIAGRAM.md)
+- [Glossary](docs/design/GLOSSARY.md)
+- [Business-rule register](docs/design/BUSINESS_RULE_REGISTER.md)
+- [Decision log](DECISION_LOG.md)
+- [Final audit](FINAL_AUDIT_REPORT.md)

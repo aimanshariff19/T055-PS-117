@@ -74,20 +74,19 @@ public class DocumentValidator {
 
         VerificationMode mode = verificationModeResolver.resolve(score, application);
         result.setVerificationMode(mode);
+        application.setVerificationMode(mode);
 
         if (!blockingGaps.isEmpty() || score < 3) {
             result.setValidationStatus(ValidationStatus.DOC_BLOCK);
             application.setApplicationStatus(ApplicationStatus.DOC_BLOCK);
             application.setValidationStatus(ValidationStatus.DOC_BLOCK);
             application.setEligibleForAllocation(false);
-            application.setVerificationMode(VerificationMode.DOC_BLOCK);
             application.setBlockingReason(String.join("; ", blockingGaps));
         } else {
             result.setValidationStatus(ValidationStatus.VALID);
             application.setApplicationStatus(ApplicationStatus.VALIDATED);
             application.setValidationStatus(ValidationStatus.VALID);
             application.setEligibleForAllocation(true);
-            application.setVerificationMode(mode);
             application.setBlockingReason(null);
         }
         application.setDocumentScore(score);

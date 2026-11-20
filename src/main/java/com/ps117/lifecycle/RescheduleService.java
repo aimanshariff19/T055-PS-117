@@ -17,6 +17,12 @@ public class RescheduleService {
     private final List<RescheduleHistory> history = new ArrayList<>();
     private final Map<String, LocalDateTime> lastRescheduleMap = new HashMap<>();
 
+    public void recordInitialBooking(Application application, LocalDateTime bookingTime) {
+        if (application != null && bookingTime != null) {
+            lastRescheduleMap.putIfAbsent(application.getApplicationId(), bookingTime);
+        }
+    }
+
     public boolean canReschedule(Application application, LocalDateTime requestTime) {
         if (application == null) return false;
         if (application.getRescheduleCount() >= MAX_RESCHEDULES) {

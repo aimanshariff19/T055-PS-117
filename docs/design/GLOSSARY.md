@@ -1,0 +1,21 @@
+# Glossary
+
+- **Allocation**: Assigning an eligible application to a centre, date and time slot.
+- **Appointment**: A booking created for an application and a slot.
+- **Blocking gap**: A missing, invalid or expired requirement that prevents allocation.
+- **FIFO**: First-in, first-out ordering; earlier application timestamps are considered first within a priority group.
+- **PCC**: Police Clearance Certificate service.
+- **PSK**: Passport Seva Kendra, represented as a centre in the input data.
+- **Quota**: A share of daily centre capacity reserved for a service or priority pool.
+- **Released quota**: Unused eligible quota made available to other allocation pools at the configured release time.
+- **TATKAL**: Urgent passport service; the sample rules require verified Aadhaar and include a surcharge.
+- **Document score**: Sum of verification points assigned to valid documents.
+- **Police verification**: Verification routing reported as `POST`, `PRE`, `SKIPPED`, or internally `DOC_BLOCK` below the score threshold.
+- **Rescheduling**: Moving an active appointment to another date or slot.
+- **Cancellation**: Ending an active appointment and calculating a refund.
+- **No-show**: The applicant does not attend; the appointment is recorded as expired.
+- **Rebooking**: Creating a new appointment following an eligible no-show.
+- **Walk-in**: An unscheduled arrival processed by a `WALK_IN` command, subject to eligibility, document validation, capacity and daily cap.
+- **Overbooking**: Assigning beyond a slot's physical capacity within the calculated allowance.
+- **Wait flag**: Indicates that an appointment uses overbooking capacity.
+- **Forfeiture**: Recording fee loss following applicable no-show or cancellation rules.

@@ -14,4 +14,9 @@ class MainTest {
     void helpReturnsSuccessWithoutProcessingInputs() throws Exception {
         assertEquals(0, Main.run(new String[]{"--help"}));
     }
+
+    @Test
+    void streamRequiresExplicitInputFiles() throws Exception {
+        assertEquals(2, Main.run(new String[]{"STREAM"}));
+    }
 }

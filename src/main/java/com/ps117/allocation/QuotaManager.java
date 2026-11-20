@@ -140,6 +140,25 @@ public class QuotaManager {
         return new ArrayList<>(quotas.values());
     }
 
+    /**
+     * Return (un-consume) a quota unit back to its pool.
+     * Used when a slot can't be found after quota was consumed (rollback).
+     */
+    public void returnQuota(String centreId, LocalDate date, QuotaType type) {
+        QuotaAllocation allocation = quotas.get(key(centreId, date, type));
+        if (allocation == null) return;
+        allocation.setUsedQuota(Math.max(0, allocation.getUsedQuota() - 1));
+        allocation.setRemainingCapacity(allocation.getRemainingCapacity() + 1);
+        allocation.setUnusedQuota(allocation.getUnusedQuota() + 1);
+    }
+
+    /**
+     * Consume a specific quota type (used for rollback scenarios).
+     */
+    public boolean consumeSpecific(String centreId, LocalDate date, QuotaType type) {
+        return consume(centreId, date, type, 1);
+    }
+
     private String key(String centreId, LocalDate date, QuotaType type) {
         return centreId + "|" + date + "|" + type.name();
     }

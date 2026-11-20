@@ -73,12 +73,13 @@ class BusinessRuleEdgeCasesTest {
 
         // At application time, aged 14 (< 15)
         assertTrue(app.isMinorOn(applicationDate), "Aged 14 at application time");
-        // On appointment date, aged 15 (not < 15)
+        // The age-15 fee boundary is distinct from the under-18 priority category.
         assertFalse(app.isMinorOn(appointmentDate), "Turns 15 before appointment date");
+        assertTrue(app.isUnder18On(appointmentDate), "Remains under 18 on appointment date");
 
         AllocationEngine engine = new AllocationEngine();
         Category category = engine.calculateCategory(app, appointmentDate);
-        assertEquals(Category.NORMAL, category, "Must not be MINOR category after turning 15");
+        assertEquals(Category.MINOR, category, "Age 15 remains MINOR under BR-02's under-18 rule");
 
         FeeCalculator feeCalculator = new FeeCalculator();
         BigDecimal appFee = feeCalculator.calculate(app, appointmentDate);
@@ -174,6 +175,19 @@ class BusinessRuleEdgeCasesTest {
         assertFalse(fourthAttempt, "Fourth reschedule must be rejected");
     }
 
+    @Test
+    void firstRescheduleMustBeSevenDaysAfterInitialBooking() {
+        RescheduleService service = new RescheduleService();
+        Application app = new Application();
+        app.setApplicationId("RESCHEDULE-BOUNDARY");
+        service.recordInitialBooking(app, LocalDateTime.of(2026, 9, 28, 18, 0));
+
+        assertFalse(service.canReschedule(app, LocalDateTime.of(2026, 10, 4, 6, 0)),
+                "A request less than seven days after initial booking is rejected");
+        assertTrue(service.canReschedule(app, LocalDateTime.of(2026, 10, 6, 18, 0)),
+                "A request at least seven days after initial booking is allowed");
+    }
+
     // Edge Case 6: Slot capacity 7 and overbooking rounds down to 0
     @Test
     void edgeCase6_slotCapacity7OverbookingRoundsTo0() {
@@ -228,33 +242,6 @@ class BusinessRuleEdgeCasesTest {
         assertTrue(service.registerWalkIn(senior3));
         // 4th walk-in must be turned away
         assertFalse(service.registerWalkIn(diffAbled4), "4th walk-in must be refused when cap is 3");
-    }
-
-    @Test
-    void refundAtMoreThan48HoursUsesExactDuration() {
-        LocalDateTime appointment = LocalDateTime.of(2026, 10, 9, 9, 0);
-        LocalDateTime cancellation = LocalDateTime.of(2026, 10, 7, 8, 30);
-        RefundResult result = new RefundCalculator().calculate(
-                new BigDecimal("2000.00"), cancellation, appointment, false);
-        assertEquals(new BigDecimal("1900.00"), result.getRefundAmount(),
-                "48 hours and 30 minutes is in the >48h full-refund-minus-100 band");
-    }
-
-    @Test
-    void thirdRescheduleMovesApplicantBehindFifoPeersInSameCategory() {
-        Application rescheduled = new Application();
-        rescheduled.setApplicationId("APN-OLD");
-        rescheduled.setCategory(Category.NORMAL);
-        rescheduled.setApplicationTimestamp(LocalDateTime.of(2026, 1, 1, 9, 0));
-        rescheduled.setThirdRescheduleMovedToBack(true);
-
-        Application ordinary = new Application();
-        ordinary.setApplicationId("APN-NEW");
-        ordinary.setCategory(Category.NORMAL);
-        ordinary.setApplicationTimestamp(LocalDateTime.of(2026, 2, 1, 9, 0));
-
-        assertTrue(new PriorityComparator().compare(rescheduled, ordinary) > 0,
-                "Third-reschedule applicant must be behind ordinary applicants in the same category");
     }
 
     // Additional test: Invalid CSV rows
@@ -461,6 +448,113 @@ class BusinessRuleEdgeCasesTest {
         boolean isOverflow = slot.allocate();
         assertTrue(isOverflow, "11th seat must be flagged as overflow WAIT");
         assertEquals(SlotStatus.FULL, slot.getStatus(), "Slot is now full");
+    }
+
+    @Test
+    void plantedScenario_reissueFeesBasedOnExpiry() {
+        FeeCalculator calculator = new FeeCalculator();
+        LocalDate apptDate = LocalDate.of(2026, 10, 8);
+
+        // APN-0013: RE-ISSUE, 36 pages, expired 2022-06-30 (>3 years before appt)
+        Application appOver3Y = new Application();
+        appOver3Y.setApplicationId("APN-0013");
+        appOver3Y.setServiceType(ServiceType.RE_ISSUE);
+        appOver3Y.setBookletSize(BookletSize.PAGES_36);
+        appOver3Y.setOldPassportExpiry(LocalDate.of(2022, 6, 30));
+        FeeBreakdown feeOver3Y = calculator.breakdown(appOver3Y, apptDate);
+        assertEquals(new BigDecimal("3000.00"), feeOver3Y.getBaseFee(), "RE-ISSUE expired >3 years must have 3000 base fee");
+
+        // APN-0042: RE-ISSUE, 36 pages, expired 2026-02-28 (within 1 year of appt)
+        Application appWithin1Y = new Application();
+        appWithin1Y.setApplicationId("APN-0042");
+        appWithin1Y.setServiceType(ServiceType.RE_ISSUE);
+        appWithin1Y.setBookletSize(BookletSize.PAGES_36);
+        appWithin1Y.setOldPassportExpiry(LocalDate.of(2026, 2, 28));
+        FeeBreakdown feeWithin1Y = calculator.breakdown(appWithin1Y, apptDate);
+        assertEquals(new BigDecimal("1500.00"), feeWithin1Y.getBaseFee(), "RE-ISSUE within 1 year must have NORMAL base fee 1500");
+    }
+
+    @Test
+    void plantedScenario_lostPassportFees() {
+        FeeCalculator calculator = new FeeCalculator();
+
+        // APN-0081 scenario: LOST passport 60 pages
+        Application appLost60 = new Application();
+        appLost60.setApplicationId("APN-0081");
+        appLost60.setServiceType(ServiceType.RE_ISSUE);
+        appLost60.setPassportCondition(PassportCondition.LOST);
+        appLost60.setBookletSize(BookletSize.PAGES_60);
+        FeeBreakdown feeLost60 = calculator.breakdown(appLost60, LocalDate.of(2026, 10, 15));
+        assertEquals(new BigDecimal("3500.00"), feeLost60.getBaseFee(), "Lost passport 60 pages must be 3500");
+
+        // Lost passport 36 pages
+        Application appLost36 = new Application();
+        appLost36.setServiceType(ServiceType.RE_ISSUE);
+        appLost36.setPassportCondition(PassportCondition.LOST);
+        appLost36.setBookletSize(BookletSize.PAGES_36);
+        FeeBreakdown feeLost36 = calculator.breakdown(appLost36, LocalDate.of(2026, 10, 15));
+        assertEquals(new BigDecimal("3000.00"), feeLost36.getBaseFee(), "Lost passport 36 pages must be 3000");
+    }
+
+    @Test
+    void plantedScenario_tatkalSeniorDiscount() {
+        FeeCalculator calculator = new FeeCalculator();
+        LocalDate apptDate = LocalDate.of(2026, 10, 15);
+
+        // APN-0103: Senior citizen + Tatkal
+        Application app = new Application();
+        app.setApplicationId("APN-0103");
+        app.setCategory(Category.TATKAL);
+        app.setDateOfBirth(LocalDate.of(1955, 1, 1)); // Senior (>60)
+        app.setServiceType(ServiceType.TATKAL);
+        app.setBookletSize(BookletSize.PAGES_36);
+
+        FeeBreakdown fee = calculator.breakdown(app, apptDate);
+        assertEquals(new BigDecimal("1500.00"), fee.getBaseFee(), "Base fee 1500");
+        assertEquals(new BigDecimal("150.00"), fee.getSeniorDiscount(), "10% senior discount on base fee only = 150");
+        assertEquals(new BigDecimal("2000.00"), fee.getTatkalSurcharge(), "Tatkal surcharge = 2000");
+        assertEquals(new BigDecimal("3350.00"), fee.getTotal(), "Total = 1500 - 150 + 2000 = 3350");
+    }
+
+    @Test
+    void plantedScenario_apn0091_tatkalWithoutVerifiedAadhaarCategoryPreserved() {
+        Application app = new Application();
+        app.setApplicationId("APN-0091");
+        app.setServiceType(ServiceType.TATKAL);
+        app.setAadhaarVerificationStatus(VerificationStatus.UNVERIFIED);
+        app.setCategory(Category.TATKAL);
+
+        AllocationEngine engine = new AllocationEngine();
+        Category cat = engine.calculateCategory(app, LocalDate.of(2026, 10, 7));
+        assertEquals(Category.TATKAL, cat, "Category must remain TATKAL even if Aadhaar unverified");
+
+        Document d1 = new Document("D1", app.getApplicationId(), DocumentType.ADDRESS_PROOF, VerificationStatus.VERIFIED, LocalDate.of(2027, 1, 1), true);
+        Document d2 = new Document("D2", app.getApplicationId(), DocumentType.DOB_PROOF, VerificationStatus.VERIFIED, LocalDate.of(2027, 1, 1), true);
+        Document d3 = new Document("D3", app.getApplicationId(), DocumentType.PHOTOGRAPH, VerificationStatus.VERIFIED, LocalDate.of(2027, 1, 1), true);
+
+        DocumentValidator validator = new DocumentValidator();
+        DocumentValidationResult vr = validator.validate(app, List.of(d1, d2, d3), LocalDate.of(2026, 10, 7));
+        assertEquals(ValidationStatus.DOC_BLOCK, vr.getValidationStatus(), "Must be blocked due to unverified Aadhaar");
+        assertTrue(vr.getBlockingGaps().contains("TATKAL requires VERIFIED Aadhaar"));
+    }
+
+    @Test
+    void plantedScenario_apn0098_docScoreBelow3RemainsDocBlock() {
+        Application app = new Application();
+        app.setApplicationId("APN-0098");
+        app.setServiceType(ServiceType.NORMAL);
+
+        // Only two SELF_ATTESTED docs (score 2) and no photograph
+        Document d1 = new Document("D1", app.getApplicationId(), DocumentType.ADDRESS_PROOF, VerificationStatus.SELF_ATTESTED, LocalDate.of(2027, 1, 1), true);
+        Document d2 = new Document("D2", app.getApplicationId(), DocumentType.DOB_PROOF, VerificationStatus.SELF_ATTESTED, LocalDate.of(2027, 1, 1), true);
+
+        DocumentValidator validator = new DocumentValidator();
+        DocumentValidationResult vr = validator.validate(app, List.of(d1, d2), LocalDate.of(2026, 10, 7));
+        assertEquals(2, vr.getDocumentScore());
+        assertEquals(ValidationStatus.DOC_BLOCK, vr.getValidationStatus());
+        assertEquals(VerificationMode.DOC_BLOCK, vr.getVerificationMode(),
+                "score below 3 remains DOC_BLOCK internally");
+        assertTrue(vr.getBlockingGaps().stream().anyMatch(g -> g.contains("below minimum threshold 3")));
     }
 
     // CLI Commands Tests

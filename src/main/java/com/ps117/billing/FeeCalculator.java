@@ -10,8 +10,9 @@ import com.ps117.util.MoneyUtils;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.Period;
 
-public class FeeCalculator implements FeeStrategy {
+public class FeeCalculator {
     public static final BigDecimal BASE_NORMAL_36 = new BigDecimal("1500.00");
     public static final BigDecimal BASE_NORMAL_60 = new BigDecimal("2000.00");
     public static final BigDecimal TATKAL_SURCHARGE = new BigDecimal("2000.00");
@@ -23,7 +24,6 @@ public class FeeCalculator implements FeeStrategy {
     public static final BigDecimal LOST_DAMAGED_60 = new BigDecimal("3500.00");
     public static final BigDecimal SENIOR_DISCOUNT_RATE = new BigDecimal("0.10");
 
-    @Override
     public BigDecimal calculate(Application application) {
         return calculate(application, null);
     }
@@ -64,9 +64,17 @@ public class FeeCalculator implements FeeStrategy {
 
         if (service == ServiceType.PCC) {
             base = PCC_BASE;
+        } else if (application.getPassportCondition() == PassportCondition.LOST || application.getPassportCondition() == PassportCondition.DAMAGED) {
+            base = booklet == BookletSize.PAGES_60 ? LOST_DAMAGED_60 : LOST_DAMAGED_36;
         } else if (service == ServiceType.RE_ISSUE) {
-            if (application.getPassportCondition() == PassportCondition.LOST || application.getPassportCondition() == PassportCondition.DAMAGED) {
-                base = booklet == BookletSize.PAGES_60 ? LOST_DAMAGED_60 : LOST_DAMAGED_36;
+            if (application.getOldPassportExpiry() != null && effectiveDate != null) {
+                LocalDate expiry = application.getOldPassportExpiry();
+                if (expiry.isBefore(effectiveDate) && Period.between(expiry, effectiveDate).getYears() >= 3) {
+                    base = REISSUE_BASE; // 3000.00 for expired over 3 years
+                } else {
+                    // Within 1 year of expiry (or ambiguous 1-3 years): standard normal fee
+                    base = booklet == BookletSize.PAGES_60 ? BASE_NORMAL_60 : BASE_NORMAL_36;
+                }
             } else {
                 base = REISSUE_BASE;
             }

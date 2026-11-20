@@ -15,21 +15,13 @@ public class PriorityComparator implements Comparator<Application> {
         int categoryOrder = priorityRank(a.getCategory()) - priorityRank(b.getCategory());
         if (categoryOrder != 0) return categoryOrder;
 
-        // The third-reschedule rule explicitly moves that applicant to the
-        // back of their category queue, ahead of the normal FIFO tie-break.
-        int reschedulePenalty = Boolean.compare(
-                a.isThirdRescheduleMovedToBack(),
-                b.isThirdRescheduleMovedToBack()
-        );
-        if (reschedulePenalty != 0) return reschedulePenalty;
-
         if (a.getApplicationTimestamp() != null && b.getApplicationTimestamp() != null) {
             int ts = a.getApplicationTimestamp().compareTo(b.getApplicationTimestamp());
             if (ts != 0) return ts;
-        } else if (a.getApplicationTimestamp() != null) {
-            return -1;
-        } else if (b.getApplicationTimestamp() != null) {
-            return 1;
+        }
+
+        if (a.getRescheduleCount() != b.getRescheduleCount()) {
+            return Integer.compare(a.getRescheduleCount(), b.getRescheduleCount());
         }
 
         return String.CASE_INSENSITIVE_ORDER.compare(

@@ -91,8 +91,7 @@ public class AllocationEngine {
     public Category calculateCategory(Application application, LocalDate appointmentDate) {
         if (application == null) return Category.NORMAL;
 
-        if (application.getServiceType() == ServiceType.TATKAL
-                && application.getAadhaarVerificationStatus() == VerificationStatus.VERIFIED) {
+        if (application.getServiceType() == ServiceType.TATKAL) {
             return Category.TATKAL;
         }
 
@@ -104,10 +103,10 @@ public class AllocationEngine {
         }
 
         if (appointmentDate != null) {
-            if (application.getDateOfBirth() != null && !application.isMinorOn(appointmentDate)) {
-                // Minor turned 15/18 between application and appointment - no longer a minor on appointment day!
-            } else if (application.isMinorOn(appointmentDate)
-                    || (application.getCategoryFlags() != null && application.getCategoryFlags().contains(Category.MINOR))) {
+            if (application.isUnder18On(appointmentDate)
+                    || (application.getDateOfBirth() == null
+                    && application.getCategoryFlags() != null
+                    && application.getCategoryFlags().contains(Category.MINOR))) {
                 return Category.MINOR;
             }
         } else if (application.getCategoryFlags() != null && application.getCategoryFlags().contains(Category.MINOR)) {

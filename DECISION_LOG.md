@@ -53,8 +53,8 @@
 
 ### DEC-006: Reschedule Minimum Spacing and Third Reschedule Penalty
 - **Context**: Frequency of allowable reschedules and penalty mechanics.
-- **Decision**: Maximum allowable reschedules is capped at 3. Reschedule requests must be spaced at least 7 days after the previous booking/reschedule date (`!requestedDate.isBefore(previousDate.plusDays(7))`). On the 3rd reschedule, the applicant's record is flagged with `thirdRescheduleMovedToBack = true` and sorted behind normal applicants in the priority queue.
-- **Rationale**: Prevents calendar hoarding. Reschedule on exactly day 7 is valid (EC-05). Fourth reschedule is rejected.
+- **Decision**: Maximum allowable reschedules is capped at 3. Reschedule requests must be spaced at least 7 days after the previous booking/reschedule timestamp (`!requestedDate.isBefore(previousDate.plusDays(7))`). The first request is measured from the initial appointment booking timestamp; later requests are measured from the previous successful reschedule. On the 3rd reschedule, the applicant's record is flagged with `thirdRescheduleMovedToBack = true` and sorted behind normal applicants in the priority queue.
+- **Rationale**: Prevents calendar hoarding. Reschedule on exactly day 7 is valid (EC-05). Fourth reschedule is rejected. The stream engine seeds the spacing check from `Appointment.bookedAt`.
 - **Reference**: BR-06, EC-05.
 
 ---
@@ -98,3 +98,41 @@
 - **Decision**: `PassportSlotEngine` implements dedicated methods for each command, only loading relevant datasets, running command-specific logic, and emitting command-specific artifacts and summaries.
 - **Rationale**: Complies with CLI requirements and prevents unnecessary side-effects or extraneous files during focused commands.
 - **Reference**: Section F (CLI Requirements).
+
+
+---
+
+### DEC-012: TATKAL Category Preservation for Unverified Aadhaar Applications (APN-0091)
+- **Context**: APN-0091 is a TATKAL applicant who did not supply a verified Aadhaar (`aadhaar_verified = false`). Previous implementation reverted its category to `NORMAL` in `validation.csv` because it failed the Aadhaar requirement.
+- **Decision**: The applicant's declared priority category remains `TATKAL` in `validation.csv` (reflecting their application submission), while the document validation check blocks allocation with `status = DOC_BLOCK` and `blocking_gaps = "TATKAL requires VERIFIED Aadhaar"`.
+- **Rationale**: An applicant applying under the TATKAL scheme does not become a general NORMAL applicant merely because a mandatory Tatkal document was missing; rather, they are a TATKAL applicant whose application is blocked due to a missing requirement.
+- **Reference**: BR-02, BR-03, APN-0091.
+
+---
+
+### DEC-013: Verification Mode Domain Constraints in Evaluation CSV (APN-0098)
+- **Context**: BR-11 assigns scores below 3 to `DOC_BLOCK`, while the sample-data README binding choice restricts the `verification_mode` CSV column to `POST`, `PRE`, or `SKIPPED`. These requirements conflict for APN-0098 (score 2). Separately, a missing mandatory document can block an applicant whose score still selects a valid verification mode.
+- **Decision**: Keep validation status and the police-verification track semantically distinct. Internally, score below 3 is represented as `DOC_BLOCK` for document validation and allocation blocking. In the evaluation CSV, `DOC_BLOCK` is mapped to `PRE` in the verification column because the binding output enum admits only `POST`, `PRE`, or `SKIPPED`. The `status` column remains `DOC_BLOCK`.
+- **Rationale**: The mapping occurs only at serialization to satisfy the required CSV enum; internal validation and allocation continue to see `DOC_BLOCK`.
+- **Unresolved conflict**: BR-11's score `< 3` result is `DOC_BLOCK`, while the sample binding enum for the CSV verification column does not permit that value. The CSV's `PRE` value is a compatibility mapping, not a claim that the blocked application actually qualifies for PRE verification.
+- **Reference**: BR-11, Sample Data README Binding Choices, APN-0098, APN-0111.
+
+---
+
+### DEC-014: APN-0055 Minor Category vs Under-15 Concession Fee Dual Boundary
+- **Context**: APN-0055 was born on `2011-10-10`, applied on `2026-10-01` (aged 14), and had an appointment on `2026-10-14` (having turned 15 on `2026-10-10`).
+- **Decision**:
+  - **Priority category**: Evaluate independently under BR-02's age `< 18` definition. At age 15, APN-0055 remains `MINOR` and keeps the existing priority rank; do not alter the assignment's priority ordering.
+  - **Fee**: Evaluate the under-15 concession independently. At age 15, APN-0055 no longer qualifies for the ₹1,000 concession and pays the standard 36-page fee of ₹1,500.00.
+- **Conflicting sample wording**: EC-02 in `T055-PS-117-sample-data/README.md` says: *"MINOR under 15 (Rs 1000.00) at application, 15 (Rs 1500.00) on the appointment day"*. This explicitly distinguishes the age-15 fee (`Rs 1500.00`) but does not explicitly say that a 15-year-old ceases to be a `MINOR` priority category. It therefore does not override BR-02's under-18 category rule.
+- **Rationale**: Category and fee eligibility have distinct age boundaries. The test verifies both outcomes: `MINOR` category at age 15 and the normal fee of ₹1,500.00.
+- **Reference**: BR-02, BR-05, EC-02, APN-0055.
+
+---
+
+### DEC-015: APN-0016 Sample Reschedule Timing Conflict
+- **Context**: The stream requests reschedules for APN-0016 at 2026-10-04 06:00, 2026-10-06 11:00 and 2026-10-13 11:00. Its initial appointment was booked on 2026-09-28 18:00.
+- **Decision**: Enforce BR-06 uniformly: the first request must be at least seven days after the initial booking; subsequent requests must be at least seven days after the previous successful reschedule. Do not waive this rule for a particular applicant or edit the supplied command stream.
+- **Observed result**: The 2026-10-04 request is rejected because it is less than seven days after booking. The 2026-10-06 request is accepted; the 2026-10-13 request is accepted exactly seven days later. The stream therefore has two successful reschedules, not three.
+- **Conflict**: The sample-data README describes these as two preceding reschedules followed by a third on the seven-day boundary, but the first two supplied request timestamps are only two days apart. The isolated EC-05 unit test covers a third reschedule at the exact seven-day boundary using a seeded prior reschedule; it does not make the inconsistent stream commands all succeed.
+- **Reference**: BR-06, EC-05, `commands.txt` lines 27, 41 and 116.
