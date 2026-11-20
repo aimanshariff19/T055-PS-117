@@ -1,10 +1,10 @@
 # T055-PS-117
 
-Java 25 command-line simulation of passport appointment validation, priority allocation, quota handling, fees and appointment lifecycle events.
+Java 17 command-line simulation of passport appointment validation, priority allocation, quota handling, fees and appointment lifecycle events.
 
 ## Requirements
 
-- JDK 25 or newer
+- JDK 17 or newer
 - PowerShell on Windows
 - Maven Wrapper included in this repository
 

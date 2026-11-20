@@ -26,14 +26,14 @@ The stream engine is a deterministic in-memory simulation; it is not a web servi
 
 ## Non-functional requirements
 
-- Java 25 and Maven build.
+- Java 17 and Maven build.
 - Repeatable calculations using explicit simulation timestamps and `BigDecimal` for monetary values.
 - CSV files are rewritten on each execution so prior report rows do not persist.
 - Keep processing, business rules and CSV handling in distinct packages.
 
 ## Technology and architecture
 
-- Java 25, Maven, Apache Commons CSV, JUnit 5.
+- Java 17, Maven, Apache Commons CSV, JUnit 5.
 - `Main` parses CLI modes and launches the relevant engine.
 - `CommandStreamEngine` loads stream inputs, owns simulation state, dispatches each command and writes the stream reports.
 - `PassportSlotEngine` supports the separate batch CLI pipeline.
@@ -86,7 +86,7 @@ The command stream writes the exact headers required by the supplied sample-data
 
 ## Testing
 
-Run `& .\mvnw.cmd clean package` for a clean Java 25 build and complete JUnit suite. The suite covers allocation, fees, validation, CLI parsing and documented business-rule edges. The full command stream is an additional integration check; its observed counts and unresolved data conflicts are recorded in [FINAL_AUDIT_REPORT.md](../../FINAL_AUDIT_REPORT.md).
+Run `& .\mvnw.cmd clean package` for a clean Java 17 build and complete JUnit suite. The suite covers allocation, fees, validation, CLI parsing and documented business-rule edges. The full command stream is an additional integration check; its observed counts and unresolved data conflicts are recorded in [FINAL_AUDIT_REPORT.md](../../FINAL_AUDIT_REPORT.md).
 
 ## Limitations
 
@@ -97,4 +97,4 @@ Run `& .\mvnw.cmd clean package` for a clean Java 25 build and complete JUnit su
 
 ## Conclusion
 
-The project is a Java 25 CLI simulation with separate rule services, CSV inputs/outputs and a test suite. Its two operating modes are retained; the documented single command runs the full sample command stream.
+The project is a Java 17 CLI simulation with separate rule services, CSV inputs/outputs and a test suite. Its two operating modes are retained; the documented single command runs the full sample command stream.
