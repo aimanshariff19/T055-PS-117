@@ -19,6 +19,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.*;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -598,7 +599,7 @@ public class CommandStreamEngine {
         appointmentsRows.add(new String[]{
             appId,
             "NO_SHOW",
-            apptDate.atTime(9, 0).toString(),
+            formatDateTime(apptDate.atTime(9, 0)),
             appt.getCentreId(),
             appt.getAppointmentDate().toString(),
             appt.getAppointmentTime() != null ? appt.getAppointmentTime().toString() : "09:00",
@@ -1305,9 +1306,28 @@ public class CommandStreamEngine {
 
     private void writeAppointmentsCsv(Path dir) throws Exception {
         CsvWriter writer = new CsvWriter();
+
+        Set<String> allocationActions = Set.of(
+                "ALLOCATED",
+                "RESCHEDULED",
+                "REBOOKED",
+                "WALK_IN_SERVED"
+        );
+
+        // Preserve internal event history for execution-summary counts.
+        // Export only successful allocation and reallocation records.
+        List<String[]> allocationRows = appointmentsRows.stream()
+                .filter(row -> row != null
+                        && row.length > 2
+                        && allocationActions.contains(row[1]))
+                // Fixed-width timestamps sort chronologically as strings.
+                // Stream sorting is stable for records with equal timestamps.
+                .sorted(Comparator.comparing(row -> row[2]))
+                .toList();
+
         writer.write(dir.resolve("appointments.csv"),
                 new String[]{"app_id","action","action_ts","centre_id","slot_date","slot_time","quota_pool","priority_reason"},
-                appointmentsRows);
+                allocationRows);
     }
 
     private void writeFeesCsv(Path dir) throws Exception {
@@ -1447,7 +1467,7 @@ public class CommandStreamEngine {
 
     private String formatDateTime(LocalDateTime dt) {
         if (dt == null) return "";
-        return dt.toString().replace("T", " ").substring(0, Math.min(19, dt.toString().replace("T", " ").length()));
+        return dt.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
     }
 
     public int getCommandCount() { return commandCount; }
