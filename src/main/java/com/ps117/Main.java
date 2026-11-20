@@ -53,6 +53,12 @@ public class Main {
             return 0;
         }
 
+        if (processor.getInputDirectory() == null) {
+            System.err.println("An input directory is required. Supply --input-dir DIR containing centres.csv, applications.csv, documents.csv, and events.csv.");
+            printUsage(config);
+            return 2;
+        }
+
         List<Path> inputFiles = List.of(
                 processor.getCentresPath(),
                 processor.getApplicationsPath(),
@@ -79,8 +85,9 @@ public class Main {
         System.out.println("Usage: java -jar target/T055-PS-117-1.0.0.jar [COMMAND] [OPTIONS]");
         System.out.println("Commands: " + config.commands());
         System.out.println("          STREAM (command-stream engine)");
-        System.out.println("Options: --command COMMAND --centres FILE --applications FILE");
-        System.out.println("         --documents FILE --events FILE --output DIRECTORY --as-of ISO_DATE_TIME");
+        System.out.println("Options: --command COMMAND --input-dir DIR");
+        System.out.println("         [--centres FILE] [--applications FILE] [--documents FILE]");
+        System.out.println("         [--events FILE] [--output DIRECTORY] [--as-of ISO_DATE_TIME]");
         System.out.println("         --help, --version");
         System.out.println("STREAM Options: --commands FILE --centres FILE --applications FILE");
         System.out.println("         --documents FILE --holidays FILE --slot-capacity FILE --output DIRECTORY");

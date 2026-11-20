@@ -58,11 +58,11 @@ Observed totals: 135 initial allocations, 17 document-blocked applications, 13 c
 
 ## Cleanup and remaining ambiguity
 
-Old output trees and duplicate batch outputs were removed; `output\` is ignored by Git and each stream run clears/replaces its five owned files. Root duplicate design and viva documents, the PDF, and viva directory were removed. The Java batch CLI, its `sample-data\` inputs, tests and supporting scripts remain.
+Old output trees and duplicate batch outputs were removed; `output\` is ignored by Git and each stream run clears/replaces its five owned files. Root duplicate design and viva documents, the PDF, and viva directory were removed. The Java batch CLI, tests and supporting scripts remain; batch CLI users must now supply their input directory explicitly.
 
 Two specification/data ambiguities remain documented in `DECISION_LOG.md`:
 
 1. APN-0016's supplied request dates conflict with the seven-day reschedule rule.
 2. The internal `DOC_BLOCK` verification result conflicts with the allowed CSV verification enum; serialization maps the verification field to `PRE` while retaining `DOC_BLOCK` in validation status.
 
-No sample input was changed. The rule register, diagrams and design document are in `docs\design\`.
+No official stream-pack input was changed. The rule register, diagrams and design document are in `docs\design\`. The legacy batch input folder is not included; batch CLI users must supply an input directory containing `centres.csv`, `applications.csv`, `documents.csv`, and `events.csv`.

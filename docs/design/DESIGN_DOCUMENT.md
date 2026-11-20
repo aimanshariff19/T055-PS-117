@@ -55,7 +55,7 @@ The stream inputs are in `T055-PS-117-sample-data\`:
 | `fee_table.csv` | `fee_code, amount, notes` | 10 |
 | `commands.txt` | `COMMAND|arg1|arg2|...` | 266 commands |
 
-Dates use `YYYY-MM-DD`; timestamps use `YYYY-MM-DD HH:MM:SS`; booleans use `true`/`false`. Application/document and application/centre relationships are keyed by `app_id` and `centre_id`. The separate `sample-data\` directory supports the batch CLI and its tests; it is not a substitute for the stream pack.
+Dates use `YYYY-MM-DD`; timestamps use `YYYY-MM-DD HH:MM:SS`; booleans use `true`/`false`. Application/document and application/centre relationships are keyed by `app_id` and `centre_id`. Batch CLI modes require an explicitly supplied `--input-dir` containing `centres.csv`, `applications.csv`, `documents.csv`, and `events.csv`; the official stream pack is not a complete batch input directory.
 
 ## Processing workflow
 

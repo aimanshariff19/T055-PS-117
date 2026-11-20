@@ -15,10 +15,10 @@ class EngineIntegrationTest {
     void runsBasicProcessingFlow(@TempDir Path tempDirectory) throws Exception {
         PassportSlotEngine engine = new PassportSlotEngine(
                 "PROCESS",
-                Path.of("sample-data/centres.csv"),
-                Path.of("sample-data/applications.csv"),
-                Path.of("sample-data/documents.csv"),
-                Path.of("sample-data/events.csv"),
+                Path.of("T055-PS-117-sample-data/centres.csv"),
+                Path.of("T055-PS-117-sample-data/applications.csv"),
+                Path.of("T055-PS-117-sample-data/documents.csv"),
+                null,
                 tempDirectory,
                 LocalDateTime.of(2026, 11, 15, 17, 0)
         );

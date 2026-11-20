@@ -30,12 +30,17 @@ public record ApplicationConfig(
                 required(properties, "application.name"),
                 required(properties, "application.version"),
                 required(properties, "application.commands"),
-                Path.of(required(properties, "paths.centres")),
-                Path.of(required(properties, "paths.applications")),
-                Path.of(required(properties, "paths.documents")),
-                Path.of(required(properties, "paths.events")),
+                optionalPath(properties, "paths.centres"),
+                optionalPath(properties, "paths.applications"),
+                optionalPath(properties, "paths.documents"),
+                optionalPath(properties, "paths.events"),
                 Path.of(required(properties, "paths.output"))
         );
+    }
+
+    private static Path optionalPath(Properties properties, String key) {
+        String value = properties.getProperty(key);
+        return value == null || value.isBlank() ? null : Path.of(value.trim());
     }
 
     private static String required(Properties properties, String key) throws IOException {

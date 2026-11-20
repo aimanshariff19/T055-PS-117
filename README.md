@@ -45,12 +45,15 @@ The command-stream run writes these reports to the selected output directory, re
 src/main/java/com/ps117/       Java CLI, stream engine, rules, domain and CSV support
 src/test/java/com/ps117/       JUnit tests
 T055-PS-117-sample-data/       Main command-stream inputs and rule tables
-sample-data/                  Separate batch-mode inputs used by the batch CLI and tests
 docs/design/                  Design, diagrams, glossary and business-rule register
 output/                        Generated runtime reports (ignored)
 ```
 
-The project also retains batch CLI modes (`PROCESS`, `VALIDATE`, `ALLOCATE`, `QUOTA-REPORT`, `FEE-REPORT`, `DAY-SHEET`, `EVENT-PROCESS`). The command-stream mode above is the recommended full simulation.
+The project also retains batch CLI modes (`PROCESS`, `VALIDATE`, `ALLOCATE`, `QUOTA-REPORT`, `FEE-REPORT`, `DAY-SHEET`, `EVENT-PROCESS`). These modes require `--input-dir DIR`, where `DIR` contains `centres.csv`, `applications.csv`, `documents.csv`, and `events.csv`. No separate batch input dataset is included.
+
+```powershell
+java -jar target\T055-PS-117-1.0.0.jar PROCESS --input-dir "C:\path\to\batch-inputs" --output "output"
+```
 
 ## Design documents
 

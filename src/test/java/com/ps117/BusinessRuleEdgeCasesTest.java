@@ -252,10 +252,10 @@ class BusinessRuleEdgeCasesTest {
 
         PassportSlotEngine engine = new PassportSlotEngine(
                 "VALIDATE",
-                Path.of("sample-data/centres.csv"),
+                Path.of("T055-PS-117-sample-data/centres.csv"),
                 invalidApps,
-                Path.of("sample-data/documents.csv"),
-                Path.of("sample-data/events.csv"),
+                Path.of("T055-PS-117-sample-data/documents.csv"),
+                null,
                 tempDir.resolve("output"),
                 LocalDateTime.of(2026, 11, 15, 17, 0)
         );
@@ -569,10 +569,10 @@ class BusinessRuleEdgeCasesTest {
             Path out = tempDir.resolve("run-" + cmd);
             PassportSlotEngine engine = new PassportSlotEngine(
                     cmd,
-                    Path.of("sample-data/centres.csv"),
-                    Path.of("sample-data/applications.csv"),
-                    Path.of("sample-data/documents.csv"),
-                    Path.of("sample-data/events.csv"),
+                    Path.of("T055-PS-117-sample-data/centres.csv"),
+                    Path.of("T055-PS-117-sample-data/applications.csv"),
+                    Path.of("T055-PS-117-sample-data/documents.csv"),
+                    null,
                     out,
                     LocalDateTime.of(2026, 11, 15, 17, 0)
             );

@@ -19,6 +19,7 @@ public class CommandProcessor {
     private Path applicationsPath;
     private Path documentsPath;
     private Path eventsPath;
+    private Path inputDirectory;
     private Path outputPath;
     private LocalDateTime asOf;
     private boolean helpRequested;
@@ -37,6 +38,7 @@ public class CommandProcessor {
         for (int i = 0; i < args.length; i++) {
             switch (args[i]) {
                 case "--command" -> command = commandValue(valueAfter(args, ++i, "--command"));
+                case "--input-dir" -> setInputDirectory(Path.of(valueAfter(args, ++i, "--input-dir")));
                 case "--centres" -> centresPath = Path.of(valueAfter(args, ++i, "--centres"));
                 case "--applications" -> applicationsPath = Path.of(valueAfter(args, ++i, "--applications"));
                 case "--documents" -> documentsPath = Path.of(valueAfter(args, ++i, "--documents"));
@@ -72,6 +74,14 @@ public class CommandProcessor {
         return normalized;
     }
 
+    private void setInputDirectory(Path inputDirectory) {
+        this.inputDirectory = inputDirectory;
+        centresPath = inputDirectory.resolve("centres.csv");
+        applicationsPath = inputDirectory.resolve("applications.csv");
+        documentsPath = inputDirectory.resolve("documents.csv");
+        eventsPath = inputDirectory.resolve("events.csv");
+    }
+
     private LocalDateTime parseAsOf(String value) {
         try {
             return LocalDateTime.parse(value);
@@ -87,6 +97,7 @@ public class CommandProcessor {
     public boolean isHelpRequested() { return helpRequested; }
     public boolean isVersionRequested() { return versionRequested; }
     public String getCommand() { return command; }
+    public Path getInputDirectory() { return inputDirectory; }
     public Path getCentresPath() { return centresPath; }
     public Path getApplicationsPath() { return applicationsPath; }
     public Path getDocumentsPath() { return documentsPath; }

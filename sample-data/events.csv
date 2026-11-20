@@ -1,2 +1,0 @@
-event_id,application_id,event_type,event_timestamp,target_slot_id,details
-E1,A1,RESCHEDULE,2026-11-13T10:00:00,,reschedule

@@ -16,6 +16,11 @@ class MainTest {
     }
 
     @Test
+    void batchCommandRequiresAnExplicitInputDirectory() throws Exception {
+        assertEquals(2, Main.run(new String[]{"PROCESS"}));
+    }
+
+    @Test
     void streamRequiresExplicitInputFiles() throws Exception {
         assertEquals(2, Main.run(new String[]{"STREAM"}));
     }
