@@ -32,7 +32,7 @@ The stream processes commands in file order. It loads 120 applications, 339 docu
 The command-stream run writes these reports to the selected output directory, replacing those files on each run:
 
 - `validation.csv` — validation score, verification mode, status and blocking gaps.
-- `appointments.csv` — allocation and lifecycle actions.
+- `appointments.csv` — successful allocations and reallocations, in chronological order.
 - `fees.csv` — fees, concessions, refunds and forfeitures.
 - `day_sheets.csv` — requested daily centre sheets.
 - `command-log.txt` — command outcomes and rejection reasons.

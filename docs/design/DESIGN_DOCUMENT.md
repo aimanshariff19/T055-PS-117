@@ -77,7 +77,7 @@ The `verification_mode` evaluation schema allows only `POST`, `PRE` and `SKIPPED
 ## Output reports
 
 - `validation.csv`: one validation result per application.
-- `appointments.csv`: allocation and subsequent appointment actions.
+- `appointments.csv`: successful allocations and reallocations, in chronological order.
 - `fees.csv`: one fee/refund/forfeiture row per application.
 - `day_sheets.csv`: records produced by `PRINT_DAY_SHEET` commands.
 - `command-log.txt`: command outcomes and failure reasons.

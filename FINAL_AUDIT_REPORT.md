@@ -81,12 +81,14 @@ The official command-stream execution generated the following five files in the 
 | Generated report | Verified data records / entries |
 |---|---:|
 | `validation.csv` | 120 |
-| `appointments.csv` | 195 |
+| `appointments.csv` | 140 |
 | `fees.csv` | 120 |
 | `day_sheets.csv` | 132 |
 | `command-log.txt` | 266 |
 
 All five expected files were present after execution. The four CSV row counts were checked using PowerShell `Import-Csv`, and the command log was inspected.
+
+A follow-up verification on 20 November 2026 corrected the appointments export to include only successful allocation and reallocation records, ordered chronologically. The corrected `appointments.csv` contains 140 records: 135 ALLOCATED, 2 RESCHEDULED and 3 WALK_IN_SERVED. Cancellation, no-show, rejected rebooking and refused walk-in events remain available in the command log and internal execution summary; they are not allocation records in this CSV.
 
 The following totals were reported by the application:
 
@@ -261,7 +263,7 @@ This is a documented schema limitation. The report does not claim that the under
 | Official input loading | 120 applications and 339 documents |
 | Command processing | 266 commands processed |
 | Expected output generation | All five files generated |
-| CSV report row counts | Verified |
+| CSV report row counts | Verified; corrected appointments export contains 140 chronological allocation/reallocation records |
 | Command log | Generated and inspected |
 | Business-rule edge-case observations | Documented |
 | APN-0016 specification discrepancy | Unresolved and documented |
@@ -278,4 +280,4 @@ The repository retains its Java CLI implementation, automated tests, supporting 
 
 The APN-0016 rescheduling discrepancy and DOC_BLOCK verification serialization limitation remain explicitly documented and should be considered during final review.
 
-**Overall conclusion:** The build and official command-stream execution are verified. The project has a documented set of remaining specification and serialization limitations that should be reviewed before final submission. This report does not claim that the repository has been committed, pushed, or independently cleared through a complete final Git diff review.
+**Overall conclusion:** The Java 17 build, automated tests and official command-stream execution are verified. The appointment CSV export correction was committed and pushed in commit `9b2519b` on 20 November 2026, and its output was checked for the required action types, timestamp format and chronological ordering. The working tree was clean and synchronized with `origin/main` at that commit. The APN-0016 rescheduling discrepancy and DOC_BLOCK verification serialization limitation remain documented and require consideration during final submission review.
